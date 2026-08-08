@@ -1,0 +1,4 @@
+﻿actual\predicted,pred_하,pred_중,pred_상
+actual_하,323,306,0
+actual_중,160,3890,1243
+actual_상,0,738,5328

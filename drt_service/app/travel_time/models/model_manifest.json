@@ -1,0 +1,104 @@
+{
+  "version": 2,
+  "created_at": "2026-07-24T03:50:32.271993+00:00",
+  "dataset_label": "synthetic_demo_full_59939",
+  "processed_csv": "eta_processed.csv",
+  "rows_used": 59939,
+  "selected_regressor": {
+    "name": "catboost",
+    "path": "regression_catboost.joblib",
+    "selection_metric": "MAE (동률 시 RMSE, R2)",
+    "metrics": {
+      "mae_s": 24.007897790983275,
+      "rmse_s": 32.48396245285225,
+      "r2": 0.912809479556801
+    }
+  },
+  "selected_classifier": {
+    "name": "catboost",
+    "path": "classifier_catboost.joblib",
+    "selection_metric": "macro F1-score (동률 시 accuracy)",
+    "metrics": {
+      "accuracy": 0.7962962962962963,
+      "macro_f1": 0.7285043088355416,
+      "weighted_f1": 0.7933604823222594,
+      "labels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "labels_ko": [
+        "하",
+        "중",
+        "상"
+      ],
+      "confusion_matrix": [
+        [
+          323,
+          306,
+          0
+        ],
+        [
+          160,
+          3880,
+          1253
+        ],
+        [
+          0,
+          723,
+          5343
+        ]
+      ],
+      "per_class": {
+        "low": {
+          "label_ko": "하",
+          "precision": 0.6687370600414079,
+          "recall": 0.5135135135135135,
+          "f1_score": 0.5809352517985612,
+          "support": 629
+        },
+        "medium": {
+          "label_ko": "중",
+          "precision": 0.7903850071297617,
+          "recall": 0.7330436425467599,
+          "f1_score": 0.7606351695745932,
+          "support": 5293
+        },
+        "high": {
+          "label_ko": "상",
+          "precision": 0.810036385688296,
+          "recall": 0.880811078140455,
+          "f1_score": 0.8439425051334702,
+          "support": 6066
+        }
+      }
+    }
+  },
+  "regression_features": [
+    "origin_station",
+    "destination_station",
+    "weather",
+    "weekday",
+    "hour_band",
+    "speed_level",
+    "hour",
+    "route_distance_m"
+  ],
+  "classification_features": [
+    "weather",
+    "weekday",
+    "hour_band",
+    "hour"
+  ],
+  "speed_levels": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "speed_level_thresholds_kmh": {
+    "low_lt": 15.0,
+    "medium_lt": 25.0,
+    "high_gte": 25.0
+  },
+  "note": "synthetic_demo이면 실행 검증용 합성 데이터 학습 결과이며 실제 운영 성능을 의미하지 않습니다. 실제 데이터셋으로 scripts/train_eta_models.py를 다시 실행해야 합니다."
+}

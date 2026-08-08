@@ -1,0 +1,13 @@
+transformers>=4.45.0,<5
+torch
+accelerate
+faster-whisper
+sounddevice
+
+# Gemini API 비교 데모 (gemini_chat_demo.py)
+google-genai
+python-dotenv
+
+# LoRA 파인튜닝 (finetune/)
+peft>=0.11.0
+datasets>=2.19.0

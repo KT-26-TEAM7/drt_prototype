@@ -1,0 +1,451 @@
+:root {
+  color-scheme: light;
+  font-family: Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: #101828;
+  background: #f2f4f7;
+  --primary: #155eef;
+  --primary-soft: #eff4ff;
+  --success: #039855;
+  --warning: #dc6803;
+  --border: #e4e7ec;
+  --muted: #667085;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: linear-gradient(180deg, #eaf1ff 0, #f7f8fa 260px);
+}
+
+button {
+  font: inherit;
+}
+
+.tracking-shell {
+  width: min(100%, 720px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+}
+
+.state-card,
+.status-card,
+.map-card,
+.trip-card,
+.timeline-card {
+  overflow: hidden;
+  margin-bottom: 14px;
+  border: 1px solid rgba(228, 231, 236, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 28px rgba(16, 24, 40, 0.07);
+}
+
+.state-card {
+  min-height: 280px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.loading-card {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  color: var(--muted);
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 4px solid #dbe5ff;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  place-items: center;
+  border-radius: 50%;
+  color: #b42318;
+  background: #fef3f2;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.error-card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.error-card p {
+  margin: 0 0 24px;
+  color: var(--muted);
+}
+
+.error-card button {
+  border: 0;
+  border-radius: 12px;
+  padding: 12px 22px;
+  color: white;
+  background: var(--primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.status-card {
+  padding: 22px;
+  color: white;
+  border: 0;
+  background: linear-gradient(135deg, #155eef, #004eeb);
+}
+
+.status-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.status-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.17);
+  font-size: 25px;
+}
+
+.status-label,
+.status-heading h2 {
+  margin: 0;
+}
+
+.status-label {
+  margin-bottom: 3px;
+  color: #dbe7ff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-heading h2 {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.eta-panel {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.eta-panel span {
+  color: #dbe7ff;
+  font-size: 13px;
+}
+
+.eta-panel strong {
+  font-size: 25px;
+  letter-spacing: -0.04em;
+}
+
+.map-card {
+  position: relative;
+}
+
+#trackingMap,
+#trackingFallback {
+  display: block;
+  width: 100%;
+  height: 400px;
+}
+
+#trackingFallback {
+  background-color: #eef2f7;
+  background-image:
+    linear-gradient(rgba(152, 162, 179, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(152, 162, 179, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.tmap-marker {
+  display: grid;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 7px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 12px;
+  color: white;
+  background: var(--primary);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.3);
+  font-size: 15px;
+  font-weight: 800;
+  transform: translate(-50%, -50%);
+  transform-origin: center;
+}
+
+.leaflet-custom-icon {
+  display: grid;
+  border: 0;
+  background: transparent;
+  place-items: center;
+  line-height: 1;
+  text-align: center;
+}
+
+.leaflet-custom-icon .tmap-marker {
+  transform: none;
+}
+
+.tmap-marker.stop-marker {
+  min-width: 18px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border-width: 3px;
+  border-radius: 50%;
+  color: transparent;
+  background: #98a2b3;
+}
+
+.all-stop-marker circle {
+  fill: #98a2b3;
+  stroke: white;
+  stroke-width: 4;
+  filter: drop-shadow(0 2px 3px rgba(16, 24, 40, 0.2));
+}
+
+.route-path {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.78;
+}
+
+.svg-marker {
+  transition: transform 0.9s linear;
+}
+
+.svg-marker circle {
+  stroke: white;
+  stroke-width: 7;
+  filter: drop-shadow(0 4px 5px rgba(16, 24, 40, 0.25));
+}
+
+.svg-marker text {
+  fill: #344054;
+  font-size: 24px;
+  font-weight: 800;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: white;
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+
+.departure-marker circle { fill: var(--success); }
+.arrival-marker circle { fill: #7a5af8; }
+.vehicle-marker circle { fill: var(--primary); }
+
+.svg-marker .vehicle-icon {
+  font-size: 28px;
+  stroke: none;
+}
+
+.route-source {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  right: 12px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.94);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.map-legend {
+  position: absolute;
+  z-index: 500;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  font-size: 11px;
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.12);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+  border-radius: 50%;
+}
+
+.legend-dot.vehicle { background: var(--primary); }
+.legend-dot.stop { background: #98a2b3; }
+.legend-dot.departure { background: var(--success); }
+.legend-dot.arrival { background: #7a5af8; }
+
+.vehicle-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.vehicle-summary span,
+.stop-row span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.vehicle-summary strong {
+  color: var(--primary);
+}
+
+.stop-list {
+  padding: 20px;
+}
+
+.stop-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.stop-row div {
+  display: grid;
+  gap: 3px;
+}
+
+.stop-dot {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.stop-dot.departure { color: var(--success); background: var(--success); }
+.stop-dot.arrival { color: #7a5af8; background: #7a5af8; }
+.stop-line {
+  width: 2px;
+  height: 24px;
+  margin: 4px 0 4px 6px;
+  background: #d0d5dd;
+}
+
+.timeline-card {
+  padding: 20px;
+}
+
+.timeline-card h2 {
+  margin: 0 0 18px;
+  font-size: 16px;
+}
+
+.status-timeline {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-timeline li {
+  position: relative;
+  flex: 1;
+  padding-top: 24px;
+  color: #98a2b3;
+  font-size: 10px;
+  text-align: center;
+}
+
+.status-timeline li::before {
+  position: absolute;
+  top: 6px;
+  right: 50%;
+  left: -50%;
+  height: 3px;
+  background: #eaecf0;
+  content: "";
+}
+
+.status-timeline li:first-child::before {
+  display: none;
+}
+
+.status-timeline li span {
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  left: calc(50% - 7px);
+  width: 14px;
+  height: 14px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #d0d5dd;
+  box-shadow: 0 0 0 1px #d0d5dd;
+}
+
+.status-timeline li.complete,
+.status-timeline li.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.status-timeline li.complete::before,
+.status-timeline li.active::before,
+.status-timeline li.complete span {
+  background: var(--primary);
+}
+
+.status-timeline li.active span {
+  background: white;
+  box-shadow: 0 0 0 4px #dbe7ff, 0 0 0 6px var(--primary);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media (min-width: 700px) {
+  .tracking-shell { padding-top: 30px; }
+  #trackingMap { height: 400px; }
+  .status-timeline li { font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation-duration: 0.01ms !important;
+  }
+}

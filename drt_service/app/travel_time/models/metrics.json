@@ -1,0 +1,163 @@
+{
+  "dataset_label": "synthetic_demo_full_59939",
+  "target_definition": {
+    "regression_target": "eta_sec",
+    "internal_column": "travel_time_sec",
+    "meaning": "출발 DRT 정류장에서 도착 DRT 정류장까지의 차량 이동시간(초)",
+    "classification_target": "speed_level"
+  },
+  "rows_used": 59939,
+  "train_rows": 47951,
+  "test_rows": 11988,
+  "split": {
+    "method": "train_test_split",
+    "train_ratio": 0.8,
+    "test_ratio": 0.2,
+    "random_seed": 42,
+    "stratified_by": "speed_level"
+  },
+  "classification_criteria": {
+    "speed_low": "speed_kmh < 15",
+    "speed_medium": "15 <= speed_kmh < 25",
+    "speed_high": "speed_kmh >= 25",
+    "class_order": [
+      "low",
+      "medium",
+      "high"
+    ],
+    "class_order_ko": [
+      "하",
+      "중",
+      "상"
+    ],
+    "class_distribution": {
+      "low": 3144,
+      "medium": 26463,
+      "high": 30332
+    }
+  },
+  "regression": {
+    "catboost": {
+      "mae_s": 24.007897790983275,
+      "rmse_s": 32.48396245285225,
+      "r2": 0.912809479556801
+    },
+    "lightgbm": {
+      "mae_s": 24.06123865914675,
+      "rmse_s": 32.993721242227544,
+      "r2": 0.9100515110626323
+    }
+  },
+  "classification": {
+    "catboost": {
+      "accuracy": 0.7962962962962963,
+      "macro_f1": 0.7285043088355416,
+      "weighted_f1": 0.7933604823222594,
+      "labels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "labels_ko": [
+        "하",
+        "중",
+        "상"
+      ],
+      "confusion_matrix": [
+        [
+          323,
+          306,
+          0
+        ],
+        [
+          160,
+          3880,
+          1253
+        ],
+        [
+          0,
+          723,
+          5343
+        ]
+      ],
+      "per_class": {
+        "low": {
+          "label_ko": "하",
+          "precision": 0.6687370600414079,
+          "recall": 0.5135135135135135,
+          "f1_score": 0.5809352517985612,
+          "support": 629
+        },
+        "medium": {
+          "label_ko": "중",
+          "precision": 0.7903850071297617,
+          "recall": 0.7330436425467599,
+          "f1_score": 0.7606351695745932,
+          "support": 5293
+        },
+        "high": {
+          "label_ko": "상",
+          "precision": 0.810036385688296,
+          "recall": 0.880811078140455,
+          "f1_score": 0.8439425051334702,
+          "support": 6066
+        }
+      }
+    },
+    "lightgbm": {
+      "accuracy": 0.7958792125458792,
+      "macro_f1": 0.7283015864637526,
+      "weighted_f1": 0.7930465412362225,
+      "labels": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "labels_ko": [
+        "하",
+        "중",
+        "상"
+      ],
+      "confusion_matrix": [
+        [
+          323,
+          306,
+          0
+        ],
+        [
+          160,
+          3890,
+          1243
+        ],
+        [
+          0,
+          738,
+          5328
+        ]
+      ],
+      "per_class": {
+        "low": {
+          "label_ko": "하",
+          "precision": 0.6687370600414079,
+          "recall": 0.5135135135135135,
+          "f1_score": 0.5809352517985612,
+          "support": 629
+        },
+        "medium": {
+          "label_ko": "중",
+          "precision": 0.7884069720308067,
+          "recall": 0.7349329302852824,
+          "f1_score": 0.7607313972817052,
+          "support": 5293
+        },
+        "high": {
+          "label_ko": "상",
+          "precision": 0.8108354892710394,
+          "recall": 0.8783382789317508,
+          "f1_score": 0.8432381103109915,
+          "support": 6066
+        }
+      }
+    }
+  }
+}

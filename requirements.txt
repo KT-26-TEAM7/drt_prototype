@@ -1,0 +1,15 @@
+# 브릿지의 판단 로직(contract/gate/mapping/speech/session)은 표준 라이브러리만 씁니다.
+# 가짜 서버(--offline)와 브릿지 테스트는 설치 없이 그대로 돌아갑니다.
+
+# 실제 drt_service를 HTTP로 호출할 때 필요합니다.
+httpx>=0.28,<1.0
+
+# 메인 서버(main_server/) — 통화를 받는 FastAPI 서버입니다.
+fastapi>=0.116,<1.0
+uvicorn[standard]>=0.35,<1.0
+pydantic>=2.10,<3.0
+
+# 메인 서버의 다솜이 안부 대화(main_server/talk.py)가 씁니다.
+# 없어도 서버는 뜨고, 대화는 규칙 기반 맞장구로 대신합니다.
+google-genai>=1.0
+python-dotenv>=1.0

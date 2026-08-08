@@ -1,0 +1,32 @@
+{
+  "elder_demo_01": {
+    "name": "김복순",
+    "home_address": "서울 동작구 사당동 (데모용 가상 주소)",
+    "home_latitude": 37.4849,
+    "home_longitude": 126.971,
+    "location_consent": true,
+    "contact": "010-0000-0001",
+    "guardian_name": "따님",
+    "guardian_contact": "010-0000-0002"
+  },
+  "elder_demo_02": {
+    "name": "박영수",
+    "home_address": "서울 동작구 사당동 (데모용 가상 주소)",
+    "home_latitude": 37.4818,
+    "home_longitude": 126.9738,
+    "location_consent": false,
+    "contact": "010-0000-0003",
+    "guardian_name": "아드님",
+    "guardian_contact": "010-0000-0004"
+  },
+  "elder_demo_03": {
+    "name": "이말순",
+    "home_address": "경기도 (서비스 범위 밖, 데모용 가상 주소)",
+    "home_latitude": 37.35,
+    "home_longitude": 127.1,
+    "location_consent": true,
+    "contact": "010-0000-0005",
+    "guardian_name": "조카",
+    "guardian_contact": "010-0000-0006"
+  }
+}

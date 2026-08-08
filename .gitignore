@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.pytest_cache/
+
+# 함께 담아 둔 세 프로젝트의 가상환경·데이터베이스는 setup.py가 다시 만듭니다.
+drt_service/.venv/
+mock_drt_server/.venv/
+care_call_bot/.venv/
+drt_service/db.sqlite3*
+mock_drt_server/mock_drt.db
+care_call_bot/consent_log.jsonl
+
+# 어르신 발화·좌표·목적지가 들어가는 감사 로그. 개인정보라 커밋하지 않습니다.
+data/handoff_log.jsonl
+# 문자 내용(목적지·조회 링크 포함)도 같은 이유로 커밋하지 않습니다.
+data/sent_sms.jsonl

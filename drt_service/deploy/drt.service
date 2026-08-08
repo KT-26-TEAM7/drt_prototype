@@ -1,0 +1,38 @@
+# systemd 유닛 (1단계 배포용)
+#
+# 설치:
+#   sudo cp deploy/drt.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now drt
+#   systemctl status drt
+#
+# 경로와 사용자는 실제 서버에 맞게 수정한다.
+
+[Unit]
+Description=DRT 도착지 추천 API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=drt
+Group=drt
+WorkingDirectory=/srv/drt_service
+EnvironmentFile=/srv/drt_service/.env
+
+# 워커는 1개로 고정한다. SQLite 단일 파일에 여러 프로세스가 쓰면
+# 잠금 경합이 생긴다. 확장이 필요해지면 그때 DB를 먼저 옮긴다.
+ExecStart=/srv/drt_service/.venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers
+
+Restart=always
+RestartSec=3
+
+# 외부 노출은 Caddy가 담당하므로 앱은 루프백에만 바인딩한다.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

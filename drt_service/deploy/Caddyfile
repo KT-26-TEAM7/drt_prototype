@@ -1,0 +1,68 @@
+# DRT API 리버스 프록시 (1단계 배포용)
+#
+# 사용:
+#   1. 아래 drt.example.com 을 실제 도메인으로 바꾼다.
+#   2. 도메인 A 레코드를 서버 공인 IP로 연결한다.
+#   3. caddy run --config /etc/caddy/Caddyfile
+#
+# TLS 인증서는 Caddy가 Let's Encrypt에서 자동 발급·갱신한다.
+# 레이트 리밋은 앱이 아니라 여기서 처리한다 (TMAP 쿼터 보호).
+#
+# 주의: rate_limit 지시어는 표준 빌드에 없다. 아래로 빌드해야 한다.
+#   xcaddy build --with github.com/mholt/caddy-ratelimit
+# 플러그인 없이 쓰려면 rate_limit 블록을 통째로 지우면 된다(그 경우
+# 레이트 리밋 없이 동작하므로 토큰 인증에만 의존하게 된다).
+
+{
+	# 인증서 발급 알림을 받을 주소
+	email admin@example.com
+	order rate_limit before reverse_proxy
+}
+
+drt.example.com {
+	encode gzip
+
+	# TMAP 쿼터 보호: 계획 수립 계열은 비싸므로 더 좁게 제한한다.
+	# /api/plan 1건이 TMAP 호출 여러 건(POI 검색 + 보행경로 N + 차량경로 + 역지오코딩)을 유발한다.
+	@expensive path /api/plan /api/reservations /api/stations/departure /api/reverse-geocode
+	rate_limit {
+		zone expensive {
+			match @expensive
+			key {remote_host}
+			events 20
+			window 1m
+		}
+		zone general {
+			key {remote_host}
+			events 120
+			window 1m
+		}
+	}
+
+	# 헬스체크는 로그를 남기지 않는다 (모니터가 주기적으로 찌름)
+	@health path /health
+	log_skip @health
+
+	reverse_proxy 127.0.0.1:8000 {
+		health_uri /health
+		health_interval 30s
+
+		# 클라이언트 실제 IP를 앱까지 전달
+		header_up X-Real-IP {remote_host}
+	}
+
+	header {
+		# 브라우저 위치 권한은 이 페이지 자신에게만 허용
+		Permissions-Policy "geolocation=(self)"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output file /var/log/caddy/drt.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}

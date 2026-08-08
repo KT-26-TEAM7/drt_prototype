@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#155eef" />
+    <title>DRT 운행 현황</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/tracking/style.css?v=20260806-2" />
+  </head>
+  <body>
+    <main class="tracking-shell">
+      <section id="loadingView" class="state-card loading-card" aria-live="polite">
+        <span class="loading-spinner" aria-hidden="true"></span>
+        <p>운행 정보를 불러오고 있습니다.</p>
+      </section>
+
+      <section id="errorView" class="state-card error-card" hidden>
+        <div class="error-icon" aria-hidden="true">!</div>
+        <h2 id="errorTitle">운행 정보를 확인할 수 없습니다</h2>
+        <p id="errorMessage">잠시 후 다시 시도해 주세요.</p>
+        <button id="retryButton" type="button">다시 시도</button>
+      </section>
+
+      <div id="dashboardView" hidden>
+        <section class="status-card" aria-live="polite">
+          <div class="status-heading">
+            <span id="statusIcon" class="status-icon" aria-hidden="true">🚐</span>
+            <div>
+              <p id="statusLabel" class="status-label">차량 접근 중</p>
+              <h2 id="statusMessage">차량이 승차 장소로 이동하고 있습니다.</h2>
+            </div>
+          </div>
+          <div class="eta-panel">
+            <span id="etaCaption">승차 장소까지</span>
+            <strong id="etaValue">--분 --초</strong>
+          </div>
+        </section>
+
+        <section class="map-card">
+          <div id="trackingMap" aria-label="차량 현재 위치 지도"></div>
+          <svg
+            id="trackingFallback"
+            viewBox="0 0 1000 460"
+            role="img"
+            aria-label="차량 현재 위치와 운행 경로 대체 화면"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <path id="routePath" class="route-path" />
+            <g id="stopMarkers"></g>
+            <g id="departureMarker" class="svg-marker departure-marker">
+              <circle r="14" />
+              <text y="-24">승차</text>
+            </g>
+            <g id="arrivalMarker" class="svg-marker arrival-marker">
+              <circle r="14" />
+              <text y="-24">하차</text>
+            </g>
+            <g id="vehicleMarker" class="svg-marker vehicle-marker">
+              <circle r="24" />
+              <text class="vehicle-icon" y="8">🚐</text>
+            </g>
+          </svg>
+          <span id="routeSource" class="route-source">경로 확인 중</span>
+          <div class="map-legend">
+            <span><i class="legend-dot vehicle"></i>차량</span>
+            <span><i class="legend-dot stop"></i>정류장</span>
+            <span><i class="legend-dot departure"></i>승차</span>
+            <span><i class="legend-dot arrival"></i>하차</span>
+          </div>
+        </section>
+
+        <section class="trip-card">
+          <div class="vehicle-summary">
+            <span>배차 차량</span>
+            <strong id="vehicleName">DRT 차량</strong>
+          </div>
+          <div class="stop-list">
+            <div class="stop-row">
+              <span class="stop-dot departure" aria-hidden="true"></span>
+              <div>
+                <span>승차 장소</span>
+                <strong id="departureName">-</strong>
+              </div>
+            </div>
+            <div class="stop-line" aria-hidden="true"></div>
+            <div class="stop-row">
+              <span class="stop-dot arrival" aria-hidden="true"></span>
+              <div>
+                <span>하차 장소</span>
+                <strong id="arrivalName">-</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="timeline-card" aria-label="운행 진행 단계">
+          <h2>운행 진행</h2>
+          <ol id="statusTimeline" class="status-timeline">
+            <li data-status="DISPATCHED"><span></span>차량 배정</li>
+            <li data-status="APPROACHING"><span></span>승차 장소 이동</li>
+            <li data-status="ARRIVED"><span></span>차량 도착</li>
+            <li data-status="IN_SERVICE"><span></span>목적지 이동</li>
+            <li data-status="COMPLETED"><span></span>운행 완료</li>
+          </ol>
+        </section>
+
+      </div>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/tracking/app.js?v=20260806-2" defer></script>
+  </body>
+</html>

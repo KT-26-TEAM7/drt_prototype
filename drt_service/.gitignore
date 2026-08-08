@@ -1,0 +1,27 @@
+# 비밀값
+.env
+
+# 가상환경
+.venv/
+
+# 파이썬 캐시
+__pycache__/
+*.py[cod]
+
+# 테스트·커버리지
+.pytest_cache/
+.pytest_tmp/
+.coverage
+htmlcov/
+
+# 로컬 DB (위치 로그가 담기므로 커밋하지 않습니다. 스키마는 app/db/models.py 참조)
+db.sqlite3
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+
+# 에디터·OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
