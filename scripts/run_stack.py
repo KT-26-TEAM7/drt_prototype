@@ -251,7 +251,7 @@ def main() -> None:
             print()
         print("이제 다른 터미널에서 실행해 보세요:")
         print("  .venv\\Scripts\\python.exe scripts\\run_handoff.py "
-              "samples\\07_exact_clinic_dispatch.json --reply \"응 불러줘\"")
+              "samples\\03_exact_library_scheduled.json --reply \"응 불러줘\"")
         print("  .venv\\Scripts\\python.exe scripts\\verify_dispatch.py")
         print()
         print(f"Ctrl+C로 {len(processes)}개 서버를 함께 내립니다.")

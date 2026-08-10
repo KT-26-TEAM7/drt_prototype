@@ -96,7 +96,7 @@ py scripts/run_stack.py
 ```
 
 ```bash
-.venv\Scripts\python.exe scripts\run_handoff.py samples\07_exact_clinic_dispatch.json --reply "응 불러줘"
+.venv\Scripts\python.exe scripts\run_handoff.py samples\03_exact_library_scheduled.json --reply "응 불러줘"
 ```
 
 분석기까지 한 번에 이어 보려면(경로 지정 불필요 — 이 폴더의 `care_call_bot`이 기본값):

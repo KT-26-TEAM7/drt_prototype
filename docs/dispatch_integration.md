@@ -172,22 +172,27 @@ py scripts/run_stack.py --check-only
 
 ```bash
 py scripts/verify_dispatch.py     # 배차 연동만 따로
-py scripts/run_handoff.py samples/07_exact_clinic_dispatch.json --reply "응 불러줘"
+py scripts/run_handoff.py samples/03_exact_library_scheduled.json --reply "응 불러줘"
 ```
 
 ## 7. 실제 확인 결과
 
-`samples/07_exact_clinic_dispatch.json`으로 전 구간을 관통시킨 기록입니다.
+`samples/03_exact_library_scheduled.json`으로 전 구간을 관통시킨 기록입니다(2026-08-10, 실제 TMAP 키).
+
+> 이전에는 `samples/07_exact_clinic_dispatch.json`(남현서울정형외과)을 썼지만, 실제 TMAP
+> 키로 붙이면 "서울정형외과의원", "서울성모정형외과의원"처럼 이름이 비슷한 병원이 여러 곳
+> 검색되어 "응 불러줘" 한 마디로 후보를 못 고르고 멈춘다(정상 동작 — 실제로 후보가 여러
+> 곳이라 되묻는 것). 검색어가 유일하게 잡히는 03번 샘플로 바꿔 끊기지 않는 전 구간을
+> 보여준다.
 
 ```
-DRT요청 : query='남현서울정형외과' (정확명 검색)
-다솜이  : 남현서울정형외과로 가시는 길을 찾았어요. 남성역에서 차를 타시면 돼요.
+DRT요청 : query='사당솔밭도서관' (정확명 검색)
+다솜이  : 사당솔밭도서관으로 가시는 길을 찾았어요. 남성역에서 차를 타시면 돼요.
           타고 내리는 시간까지 해서 약 3분 걸려요. 차를 불러 드릴까요?
 어르신  : 응 불러줘
-다솜이  : 차를 불러 드렸어요. 남성역에서 곧 차가 도착해요.
+다솜이  : 차를 불러 드렸어요. 남성역에서 약 8분 뒤에 차가 도착해요.
 
 [문자:어르신] DRT 예약이 완료되었습니다 / 승차 장소: 남성역 / http://localhost:8000/tracking?token=...
-[문자:보호자] 김복순 어르신의 이동 차량이 예약되었습니다 / 목적지: 남현서울정형외과 / 도착까지 약 1분
 ```
 
 조회 링크를 열면 차량이 실제로 움직입니다(3초 간격 폴링에서 도착까지 68→63→58초).

@@ -191,7 +191,7 @@ drt_service의 .env에서 릴레이 토큰을 읽었습니다.
 통화 시연: py scripts\call_demo.py --server http://127.0.0.1:8002
 
 이제 다른 터미널에서 실행해 보세요:
-  .venv\Scripts\python.exe scripts\run_handoff.py samples\07_exact_clinic_dispatch.json --reply "응 불러줘"
+  .venv\Scripts\python.exe scripts\run_handoff.py samples\03_exact_library_scheduled.json --reply "응 불러줘"
   .venv\Scripts\python.exe scripts\verify_dispatch.py
 
 Ctrl+C로 3개 서버를 함께 내립니다.
@@ -327,19 +327,25 @@ py scripts\run_handoff.py --all --offline --reply "응 불러줘"
 ### 4-3. 전 구간 (케어콜 결과 → 배차 → 문자)
 
 ```powershell
-.\.venv\Scripts\python.exe scripts\run_handoff.py samples\07_exact_clinic_dispatch.json --reply "응 불러줘"
+.\.venv\Scripts\python.exe scripts\run_handoff.py samples\03_exact_library_scheduled.json --reply "응 불러줘"
 ```
 
 > 실서버에 붙는 스크립트는 `httpx`가 필요하므로 **브릿지 venv의 python**으로 실행합니다.
 > (오프라인 `--offline` 은 그냥 `py` 로 됩니다.)
 
+> **2026-08-10 업데이트** — 이전엔 `samples\07_exact_clinic_dispatch.json`(남현서울정형외과)을
+> 썼지만, 실제 TMAP 키로 붙으면 "서울정형외과의원", "서울성모정형외과의원"처럼 비슷한 이름의
+> 병원이 여러 곳 검색되어 "응 불러줘" 한 마디로는 후보를 못 고르고 멈춥니다(정상 동작 —
+> 후보가 실제로 여러 곳이라 되묻는 것). 전 구간을 끊기지 않고 보여 주려면 검색어가 유일하게
+> 잡히는 `samples\03_exact_library_scheduled.json`(사당솔밭도서관)을 쓰세요.
+
 기대 출력:
 
 ```
-다솜이 : 남현서울정형외과로 가시는 길을 찾았어요. 남성역에서 차를 타시면 돼요.
+다솜이 : 사당솔밭도서관으로 가시는 길을 찾았어요. 남성역에서 차를 타시면 돼요.
          타고 내리는 시간까지 해서 약 3분 걸려요. 차를 불러 드릴까요?
 어르신 : 응 불러줘
-다솜이 : 차를 불러 드렸어요. 남성역에서 약 1분 뒤에 차가 도착해요.
+다솜이 : 차를 불러 드렸어요. 남성역에서 약 8분 뒤에 차가 도착해요.
 ```
 
 보낸 문자는 `data\sent_sms.jsonl` 에 쌓입니다(**실제 발송은 아직 되지 않습니다** —
