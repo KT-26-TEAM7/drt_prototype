@@ -122,7 +122,8 @@ def check_real_booking(drt_url: str, dispatch_url: str, token: str) -> list[pref
     results.append(preflight.CheckResult(
         "발급된 조회 링크", True,
         f"열림 · {tracking['status']} · {tracking['vehicle']['display_name']}"
-        f" · 도착까지 {tracking['estimated_arrival_seconds']}초",
+        f" · 도착까지 {tracking['estimated_arrival_seconds']}초\n"
+        f"         브라우저로 직접 열어보려면: {tracking_url}",
     ))
     return results
 

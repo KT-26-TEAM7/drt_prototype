@@ -254,12 +254,20 @@ drt_service가 실제 TMAP을 쓰는 중이면 쿼터를 소모합니다 — 그
 > 릴레이 토큰은 `setup.py`가 drt_service `.env`에서 브릿지 `.env`로 맞춰 두므로
 > 따로 넘길 필요가 없습니다. 다른 값을 쓰려면 `--token` 을 주면 됩니다.
 
-정상이면 마지막 두 줄이 이렇게 나옵니다.
+정상이면 마지막 두 줄이 이렇게 나옵니다. **발급된 조회 링크 줄 아래에 실제 URL이
+찍히니 그대로 브라우저에 붙여 넣으면 됩니다.**
 
 ```
   [OK  ] 실제 예약: CALL-60403CA1 · 차량 VEHICLE-001 · 도착예정 33초
   [OK  ] 발급된 조회 링크: 열림 · APPROACHING · DRT 1호차 · 도착까지 32초
+         브라우저로 직접 열어보려면: http://127.0.0.1:8000/tracking?token=...
 ```
+
+> **2026-08-10 업데이트** — 점검용 목적지는 실제 TMAP에서도 이름이 유일하게 잡히는
+> "사당솔밭도서관"을 씁니다. `[실패] 실제 예약: ... needs_destination_confirmation`이
+> 뜨면(§6 참고) 목적지 후보가 여러 곳이라는 뜻이지 차량 문제가 아닙니다. `[실패] ...
+> 현재 이용 가능한 차량이 없습니다`가 뜨면 §6의 차량 관련 항목을 보세요 — 차량
+> 2대가 모두 운행 중이면 잠시 뒤 다시 시도하면 됩니다.
 
 이미 떠 있는 스택만 점검하려면:
 
@@ -407,12 +415,14 @@ cd care_call_bot
 발화를 메인 서버의 `/call/utterance`로 넘기고 응답을 읽어 주기만 하는 입출력
 껍데기라, 세 서버가 떠 있지 않으면 바로 종료됩니다.
 
-`--voice`는 faster-whisper(로컬 Whisper, 오프라인·무료)로 마이크 음성을 텍스트로
-바꿉니다. Mi:dm과 달리 torch가 필요 없어 `requirements.txt`에 기본 포함되어 있습니다.
-"(말씀하세요...)"가 뜨면 말하면 되고, 말을 멈추고 1.5초가 지나면 자동으로 녹음이
-끝나 인식 결과가 대화에 들어갑니다. macOS는 처음 실행 시 마이크 접근 권한을
-허용해야 합니다. 음성 출력(TTS)은 macOS 내장 `say` 명령을 쓰므로 Windows에서는
-텍스트로만 동작합니다(`--voice`로 마이크 입력은 Windows에서도 됩니다).
+`--voice`는 faster-whisper(로컬 Whisper)로 마이크 음성을 텍스트로 바꿉니다. Mi:dm과
+달리 torch가 필요 없어 `requirements.txt`에 기본 포함되어 있습니다. **처음 실행할
+때만** Hugging Face Hub에서 STT 모델을 내려받으므로 인터넷이 필요하고, 그 뒤로는
+로컬 캐시(`~/.cache/huggingface`)로 오프라인 동작합니다. "(말씀하세요...)"가 뜨면
+말하면 되고, 말을 멈추고 1.5초가 지나면 자동으로 녹음이 끝나 인식 결과가 대화에
+들어갑니다. macOS는 처음 실행 시 마이크 접근 권한을 허용해야 합니다. 음성 출력(TTS)은
+macOS 내장 `say` 명령을 쓰므로 Windows에서는 텍스트로만 동작합니다(`--voice`로
+마이크 입력은 Windows에서도 됩니다).
 
 ---
 
@@ -453,6 +463,7 @@ cd drt_service; .\.venv\Scripts\python.exe -m pytest -q --basetemp=C:\Temp\pt
 | 배차 서버 루트(`/`)가 404 | 원래 루트 경로가 없었습니다(정상 경로는 `/vehicles`, `/stops`, `/tracking?token=...`) | 지금은 `/`도 안내 페이지를 돌려줍니다. 404가 뜨면 서버가 최신 코드로 뜬 게 맞는지 확인하세요 |
 | `409 현재 이용 가능한 차량이 없습니다` | 차량 기본 2대가 모두 운행 중 | 운행이 끝나면 돌아옵니다. `.env`의 `VEHICLE_COUNT`를 늘려도 됩니다 |
 | `no_feasible_destination` (목적지 못 찾음) | TMAP이 MOCK이라 모의 장소가 **정형외과·병원뿐** | `samples\07_...json` 처럼 정형외과 계열로 시연하거나 `TMAP_APP_KEY`를 넣기 |
+| `needs_destination_confirmation` (실제 예약 실패, 차량은 멀쩡) | 실제 TMAP 키로 붙으면 이름이 비슷한 장소가 여러 곳 검색되어 하나로 못 좁혀짐(정상 동작 — 실제로 후보가 여러 곳이라 되묻는 것) | 목적지 이름을 더 구체적으로 바꾸거나, 후보가 하나로 잡히는 곳(예: `사당솔밭도서관`)으로 시연 |
 | 응답이 `provider=mock` | `TMAP_APP_KEY`가 비어 있음 | 실제 검색이 필요하면 키를 넣고 재시작 |
 | 문자 속 링크가 열리지 않음 | 조회 링크 주소와 리슨 포트 불일치 | `run_stack.py`로 띄우면 자동으로 맞습니다. 수동이면 배차 서버 `.env`의 `TRACKING_BASE_URL`을 **지우세요**(`PORT`에서 자동 생성) |
 | `ModuleNotFoundError: httpx` | 실서버 스크립트를 시스템 python으로 실행 | 브릿지 venv의 python으로 실행 (§1-3) |
@@ -626,4 +637,3 @@ Pages + Render 배포용)**로 옮겼습니다. `mock-drt-server-main (2)`에는
 | [docs/integration_design.md](docs/integration_design.md) | 케어콜↔DRT 필드 매핑, 알려진 갭 7가지 |
 | [docs/dispatch_integration.md](docs/dispatch_integration.md) | 배차 서버 연동 상세, 각 프로젝트 변경 내역 |
 | `drt_service/RUNBOOK.md` | drt_service 단독 운영 |
-| `care_call_bot/README.md` | 케어콜 페르소나·모델 비교 |
