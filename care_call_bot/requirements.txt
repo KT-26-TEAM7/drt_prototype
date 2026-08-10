@@ -1,3 +1,9 @@
 # Gemini API 대화 데모 (gemini_chat_demo.py) 및 의도 분석기(drt_analyzer.py)
 google-genai
 python-dotenv
+
+# 음성 입력 (gemini_chat_demo.py --voice). Mi:dm과 달리 torch가 필요 없다
+# (CTranslate2 기반 로컬 Whisper, 오프라인·무료).
+faster-whisper
+sounddevice
+numpy

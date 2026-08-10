@@ -1,9 +1,9 @@
 """케어콜 분석 결과(care-call-bot의 `drt_analyzer.analyze_conversation()` 출력)를
 브릿지가 다루는 표준 형태로 옮긴다.
 
-care-call-bot의 코드를 import하지 않는다. 그쪽은 torch/Gemini/faster-whisper 의존성과
-macOS 전용 TTS 코드가 섞여 있어서, 브릿지는 **출력 JSON만**을 계약으로 삼는다.
-그래서 필드가 빠지거나(구버전 v4.py 출력) 늘어나도 죽지 않고 기본값으로 흡수한다.
+care-call-bot의 코드를 import하지 않는다. 그쪽은 Gemini 의존성과 macOS 전용 TTS
+코드가 섞여 있어서, 브릿지는 **출력 JSON만**을 계약으로 삼는다. 그래서 필드가
+빠지거나 늘어나도 죽지 않고 기본값으로 흡수한다.
 """
 from __future__ import annotations
 
