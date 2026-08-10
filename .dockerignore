@@ -1,0 +1,14 @@
+# main_server/Dockerfile은 repo root를 빌드 컨텍스트로 쓰지만 필요한 폴더만
+# 선택적으로 COPY하므로 이 파일이 없어도 안전하다. 다만 앞으로 다른 이미지가
+# COPY . . 를 쓰게 되더라도 sibling 서비스·가상환경·DB 파일이 섞이지 않도록
+# 방어적으로 둔다.
+.venv/
+*/.venv/
+__pycache__/
+*.pyc
+.git/
+*.sqlite3
+*.db
+*.db-journal
+.pytest_cache/
+.claude/

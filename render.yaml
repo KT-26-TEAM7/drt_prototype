@@ -1,0 +1,104 @@
+# Render 블루프린트 — 4개 서비스를 한 번에 정의한다.
+#
+# 사용법: Render 대시보드에서 "New +" → "Blueprint" → 이 저장소 연결.
+# `sync: false`인 값은 Render가 자동으로 채우지 않는다 — 대시보드에서 서비스별로
+# 직접 입력해야 한다(비밀값이거나, 배포 후에만 정해지는 값). 자세한 설명과 값
+# 채우는 순서는 docs/cloud_deployment.md를 보세요.
+#
+# 서비스 이름(name)이 공개 URL(https://<name>.onrender.com)을 그대로 결정하므로
+# 함부로 바꾸지 마세요 — 다른 서비스의 env var가 그 URL을 고정값으로 참조합니다.
+
+services:
+  # ── ③ 배차 서버 ──────────────────────────────────────────────────────────
+  - type: web
+    name: mock-drt-server
+    runtime: docker
+    plan: free
+    dockerfilePath: ./mock_drt_server/Dockerfile
+    dockerContext: ./mock_drt_server
+    healthCheckPath: /
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./mock_drt.db
+      - key: VEHICLE_COUNT
+        value: "2"
+      - key: VEHICLE_SPEED_KMH
+        value: "30"
+      - key: BACKGROUND_UPDATE_INTERVAL_SECONDS
+        value: "1"
+      - key: ARRIVAL_WAIT_SECONDS
+        value: "2"
+      - key: TRACKING_TOKEN_TTL_HOURS
+        value: "24"
+      - key: TMAP_API_URL
+        value: https://apis.openapi.sk.com/tmap/routes
+      - key: TMAP_TIMEOUT_SECONDS
+        value: "4"
+      # 비밀값 / 배포 후 결정: Render 대시보드에서 직접 입력
+      - key: TMAP_APP_KEY
+        sync: false
+      # 조회 링크 기본 주소. 이 서비스 자신의 Render 주소로 두거나(기본),
+      # 기존 GitHub Pages 조회 화면(kt-26-team7.github.io/drt-tracking)을
+      # 계속 쓸지 결정 필요 — docs/cloud_deployment.md 참고.
+      - key: TRACKING_BASE_URL
+        value: https://mock-drt-server.onrender.com/tracking
+
+  # ── ② drt_service ────────────────────────────────────────────────────────
+  - type: web
+    name: drt-service
+    runtime: docker
+    plan: free
+    dockerfilePath: ./drt_service/Dockerfile
+    dockerContext: ./drt_service
+    healthCheckPath: /health
+    envVars:
+      # DEBUG를 비워 두면 기본 False — RELAY_API_TOKEN 검증이 살아 있어야 한다.
+      - key: CORS_ORIGINS
+        value: http://localhost:3000,http://127.0.0.1:3000
+      - key: DRT_SERVER_BASE_URL
+        value: https://mock-drt-server.onrender.com
+      # 비밀값: main-server의 RELAY_API_TOKEN과 반드시 같은 값으로 직접 입력
+      # (생성: python -c "import secrets;print(secrets.token_urlsafe(32))")
+      - key: RELAY_API_TOKEN
+        sync: false
+      - key: TMAP_APP_KEY
+        sync: false
+
+  # ── ⓪ 메인 서버 ──────────────────────────────────────────────────────────
+  - type: web
+    name: main-server
+    runtime: docker
+    plan: free   # 콜드 스타트가 문제되면 starter로 올리세요 — docs/cloud_deployment.md §4
+    dockerfilePath: ./main_server/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - key: DRT_BASE_URL
+        value: https://drt-service.onrender.com
+      - key: DISPATCH_BASE_URL
+        value: https://mock-drt-server.onrender.com
+      # drt-service와 동일한 값으로 직접 입력
+      - key: RELAY_API_TOKEN
+        sync: false
+      # 신규 — mcp-server가 X-Call-Token으로 보낼 값. mcp-server와 동일한 값으로 직접 입력
+      - key: MAIN_SERVER_TOKEN
+        sync: false
+      - key: GEMINI_KEY
+        sync: false
+
+  # ── [신규] MCP 도구 서버 ─────────────────────────────────────────────────
+  - type: web
+    name: mcp-server
+    runtime: docker
+    plan: free   # 콜드 스타트가 문제되면 starter로 올리세요 — docs/cloud_deployment.md §4
+    dockerfilePath: ./mcp_server/Dockerfile
+    dockerContext: ./mcp_server
+    healthCheckPath: /healthz
+    envVars:
+      - key: MAIN_SERVER_BASE_URL
+        value: https://main-server.onrender.com
+      # main-server와 동일한 값으로 직접 입력
+      - key: MAIN_SERVER_TOKEN
+        sync: false
+      - key: MAIN_SERVER_TIMEOUT_S
+        value: "10"

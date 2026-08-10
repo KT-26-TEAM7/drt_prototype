@@ -26,13 +26,15 @@
 """
 from __future__ import annotations
 
+import os
 import sys
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Security, status
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
@@ -50,6 +52,21 @@ from bridge.orchestrator import (  # noqa: E402
 from main_server import analyzer as analyzer_module  # noqa: E402
 from main_server import talk  # noqa: E402
 from main_server.conversation import ConversationStore, TurnFacts  # noqa: E402
+
+
+# ── 인증 ─────────────────────────────────────────────────────────────────
+#
+# 로컬 개발에서는 아무도 이 값을 설정한 적이 없으므로 그대로 인증 없이 열려 있다.
+# 클라우드에 배포해 인터넷에 공개될 때만 MAIN_SERVER_TOKEN을 넣어 잠근다
+# (drt_service의 RELAY_API_TOKEN과 같은 패턴이지만, 신뢰 경계가 다르므로 별도 값).
+
+_MAIN_SERVER_TOKEN = os.getenv("MAIN_SERVER_TOKEN", "").strip()
+_call_token_header = APIKeyHeader(name="X-Call-Token", auto_error=False)
+
+
+async def require_call_token(x_call_token: str | None = Security(_call_token_header)) -> None:
+    if _MAIN_SERVER_TOKEN and x_call_token != _MAIN_SERVER_TOKEN:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "유효하지 않은 호출 토큰입니다.")
 
 
 # ── 요청/응답 ────────────────────────────────────────────────────────────
@@ -124,7 +141,8 @@ def create_app() -> FastAPI:
             "docs": "/docs",
         }
 
-    @application.post("/call/start", response_model=StartCallResponse, tags=["call"])
+    @application.post("/call/start", response_model=StartCallResponse, tags=["call"],
+                      dependencies=[Depends(require_call_token)])
     def start_call(payload: StartCallRequest) -> StartCallResponse:
         session_id = f"CALL-{uuid.uuid4().hex[:10].upper()}"
         application.state.sessions.create(session_id, payload.user_id)
@@ -134,7 +152,8 @@ def create_app() -> FastAPI:
         # 첫인사는 고정 멘트다. 도입부가 매번 같아야 어르신이 혼란스럽지 않다.
         return StartCallResponse(session_id=session_id, reply=talk.GREETING)
 
-    @application.post("/call/utterance", response_model=UtteranceResponse, tags=["call"])
+    @application.post("/call/utterance", response_model=UtteranceResponse, tags=["call"],
+                      dependencies=[Depends(require_call_token)])
     def handle_utterance(payload: UtteranceRequest) -> UtteranceResponse:
         state = application.state.sessions.get(payload.session_id)
         if state is None:
@@ -175,7 +194,7 @@ def create_app() -> FastAPI:
             state=state.snapshot(),
         )
 
-    @application.post("/call/end", tags=["call"])
+    @application.post("/call/end", tags=["call"], dependencies=[Depends(require_call_token)])
     def end_call(payload: UtteranceRequest | None = None, session_id: str = "") -> dict:
         target = session_id or (payload.session_id if payload else "")
         if not target:
@@ -188,7 +207,8 @@ def create_app() -> FastAPI:
         ended = application.state.sessions.end(target)
         return {"ok": ended, "reply": talk.FAREWELL}
 
-    @application.get("/call/{session_id}/state", tags=["call"])
+    @application.get("/call/{session_id}/state", tags=["call"],
+                     dependencies=[Depends(require_call_token)])
     def call_state(session_id: str) -> dict:
         state = application.state.sessions.get(session_id)
         if state is None:

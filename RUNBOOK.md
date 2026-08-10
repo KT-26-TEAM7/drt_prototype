@@ -5,6 +5,9 @@
 
 여기 적힌 명령은 모두 실제로 실행해 확인한 것입니다.
 
+> 실제 전화(ClawOps 070 번호)를 연결하려면 클라우드(Render) 배포가 필요합니다 —
+> [docs/cloud_deployment.md](docs/cloud_deployment.md)를 보세요. 이 RUNBOOK은 로컬 실행만 다룹니다.
+
 ---
 
 ## 0. 무엇이 무엇인가
@@ -636,4 +639,5 @@ Pages + Render 배포용)**로 옮겼습니다. `mock-drt-server-main (2)`에는
 | [README.md](README.md) | 브릿지가 무엇이고 왜 이렇게 만들었는지 |
 | [docs/integration_design.md](docs/integration_design.md) | 케어콜↔DRT 필드 매핑, 알려진 갭 7가지 |
 | [docs/dispatch_integration.md](docs/dispatch_integration.md) | 배차 서버 연동 상세, 각 프로젝트 변경 내역 |
+| [docs/cloud_deployment.md](docs/cloud_deployment.md) | Render 클라우드 배포, ClawOps 실시간 전화 연동(MCP) |
 | `drt_service/RUNBOOK.md` | drt_service 단독 운영 |
