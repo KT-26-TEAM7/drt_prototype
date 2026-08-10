@@ -7,7 +7,7 @@ Gemini semantic analysis + rule-based DRT flow controller
 1) Gemini: 발화 의미 분석
 2) Rules: 날짜/시간/장소/주소/missing_slots/next_question 최종 결정
 
-케어콜 대화(chat_demo.py, gemini_chat_demo.py)에서 매 턴마다
+케어콜 대화(gemini_chat_demo.py)에서 매 턴마다
 analyze_conversation()을 호출해 DRT 상태를 함께 뽑아내는 용도로도 쓰인다.
 """
 

@@ -5,7 +5,6 @@
 
     py scripts/setup.py                    # 기본 (몇 분 걸림)
     py scripts/setup.py --force            # 가상환경을 지우고 다시 만듦
-    py scripts/setup.py --full-care-call   # 케어콜 로컬 모델(torch 등)까지 설치 (수 GB)
     py scripts/setup.py --check            # 설치하지 않고 상태만 확인
 
 이미 되어 있는 단계는 건너뛰므로 여러 번 실행해도 안전하다.
@@ -180,8 +179,6 @@ def check_only() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="네 덩어리를 한 번에 준비한다")
     parser.add_argument("--force", action="store_true", help="가상환경을 지우고 다시 만든다")
-    parser.add_argument("--full-care-call", action="store_true",
-                        help="케어콜 로컬 모델(torch, faster-whisper 등)까지 설치 (수 GB)")
     parser.add_argument("--check", action="store_true", help="설치하지 않고 상태만 확인")
     args = parser.parse_args()
 
@@ -233,15 +230,8 @@ def main() -> None:
     # ── 4. 케어콜 분석기 ────────────────────────────────────────────────
     step("4/5 케어콜 분석기 (care_call_bot)")
     python = ensure_venv(CARE_CALL_DIR, "케어콜", args.force)
-    if args.full_care_call:
-        pip_install(python, CARE_CALL_DIR, ["-r", "requirements.txt"],
-                    "전체 설치 (torch 등, 수 GB — 매우 오래 걸림)")
-    else:
-        # 의도 분석(drt_analyzer)과 Gemini 대화 데모에 필요한 것만 넣는다.
-        # 로컬 Mi:dm 대화(chat_demo.py)를 쓰려면 --full-care-call로 다시 실행한다.
-        pip_install(python, CARE_CALL_DIR, ["google-genai", "python-dotenv"],
-                    "의도 분석·Gemini 데모용 의존성 설치")
-        info("로컬 Mi:dm 대화가 필요하면 --full-care-call로 다시 실행하세요.")
+    pip_install(python, CARE_CALL_DIR, ["-r", "requirements.txt"],
+                "의도 분석·Gemini 데모용 의존성 설치")
     # 분석기는 경로 없이 load_dotenv()를 부르기 때문에, 이 파일이 없으면 상위 폴더의
     # .env를 대신 읽어 GEMINI_KEY를 넣을 곳이 없어진다. 빈 템플릿을 만들어 준다.
     if not (CARE_CALL_DIR / ".env").exists():

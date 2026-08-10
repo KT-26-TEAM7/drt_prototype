@@ -1,4 +1,4 @@
 # scripts/live_demo.py가 케어콜 분석기(care_call_bot/drt_analyzer.py)를 직접 불러 쓸 때만
-# 필요합니다. 분석기의 Gemini 경로가 요구하는 것이며, 로컬 Mi:dm(torch)은 필요 없습니다.
+# 필요합니다. 분석기의 Gemini 경로가 요구하는 것입니다.
 google-genai
 python-dotenv

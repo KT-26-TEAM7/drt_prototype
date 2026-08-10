@@ -6,12 +6,12 @@
 
 이 파트에서 다루는 항목:
 - 통화 음성·STT 변환 결과 수집·이용 (대화 분석 목적)
-- STT·LLM 분석 (로컬 모델 또는 Gemini 등 외부 LLM API로 전송될 수 있음)
+- STT·LLM 분석 (Gemini 등 외부 LLM API로 전송될 수 있음)
 - 건강 관련 발화(민감정보) 처리 — 어르신이 몸 상태를 말씀하시면 그 내용도 위 목적으로 처리됨
 
 위치정보·보호자 제공·차량 배차 관련 동의는 DRT 파트 담당이라 여기서 다루지 않는다.
 
-chat_demo.py, gemini_chat_demo.py에서 공통으로 사용한다.
+gemini_chat_demo.py에서 사용한다.
 """
 
 from datetime import datetime

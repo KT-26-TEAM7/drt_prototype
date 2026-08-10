@@ -1,13 +1,3 @@
-transformers>=4.45.0,<5
-torch
-accelerate
-faster-whisper
-sounddevice
-
-# Gemini API 비교 데모 (gemini_chat_demo.py)
+# Gemini API 대화 데모 (gemini_chat_demo.py) 및 의도 분석기(drt_analyzer.py)
 google-genai
 python-dotenv
-
-# LoRA 파인튜닝 (finetune/)
-peft>=0.11.0
-datasets>=2.19.0

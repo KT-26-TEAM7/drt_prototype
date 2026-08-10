@@ -5,8 +5,8 @@ care-call-bot의 prompts/system_prompt.txt가 정한 음성 규칙을 그대로 
 - 이모지·특수문자·영어·한자 금지 (TTS로 읽히기 때문)
 
 특히 "DRT"는 영어라서 그대로 읽으면 안 된다. 어르신께는 "이동 차량"이라고 말한다.
-docs/midm_vs_gemini_comparison.md에 Mi:dm이 답변 끝에 한자를 흘린 사례가 있어서,
-문장을 만든 뒤 실제로 위반이 없는지 `tts_violations()`로 검사할 수 있게 해 두었다.
+모델 비교 과정에서 LLM이 답변 끝에 한자를 흘린 사례가 있어서, 문장을 만든 뒤
+실제로 위반이 없는지 `tts_violations()`로 검사할 수 있게 해 두었다.
 """
 from __future__ import annotations
 

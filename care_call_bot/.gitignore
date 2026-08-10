@@ -8,18 +8,7 @@ __pycache__/
 # macOS
 .DS_Store
 
-# HuggingFace / 모델 캐시
-*.gguf
-models/
-
 .env
 
 # 동의 로그 (통화 기록 성격, 개인정보라 커밋 금지)
 consent_log.jsonl
-
-# 모델 비교 테스트 결과 (실행할 때마다 갱신되는 산출물)
-compare_result.json
-
-# 파인튜닝: AI Hub 원본/변환 데이터, 학습 산출물 (용량 큼, 개인 신청 데이터라 커밋 금지)
-finetune/data/
-finetune/output/

@@ -1,7 +1,6 @@
 """Gemini API 기반 어르신 안부 케어콜 챗봇 데모.
 
-chat_demo.py(로컬 Mi:dm 2.0)와 같은 페르소나·시스템 프롬프트를 사용하되,
-로컬 모델 대신 Gemini API를 호출한다. Mi:dm과 비교 테스트하기 위한 용도로,
+`prompts/system_prompt.txt`의 페르소나를 그대로 사용해 Gemini API를 호출한다.
 매 턴마다 응답 소요 시간을 함께 출력한다.
 
 실행 전:
@@ -27,7 +26,7 @@ import drt_analyzer
 
 SYSTEM_PROMPT_PATH = Path(__file__).parent / "prompts" / "system_prompt.txt"
 
-# 케어콜은 봇이 먼저 말을 건다. 첫인사는 고정 멘트로 시작 (chat_demo.py와 동일).
+# 케어콜은 봇이 먼저 말을 건다. 첫인사는 고정 멘트로 시작.
 GREETING = "안녕하세요, 어르신. 말벗 다솜이예요. 요즘 잘 지내고 계세요?"
 
 # 모델명은 Gemini 쪽 라인업이 자주 바뀌므로, 특정 버전에 고정하지 않고

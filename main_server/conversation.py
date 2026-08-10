@@ -4,7 +4,7 @@
 
 케어콜 분석기(`care_call_bot/drt_analyzer.py`)는 **넘겨준 텍스트 전체**를 매번 다시
 해석한다. 데모 코드가 대화를 통째로 이어 붙여 넘기다 보니
-(`chat_demo.py:249`, `gemini_chat_demo.py:140`), 어르신이 한 번이라도
+(`gemini_chat_demo.py:140`), 어르신이 한 번이라도
 "오늘은 집에 있을래"라고 하시면 그 표현이 텍스트에 계속 남아
 
     detect_not_needed() -> True

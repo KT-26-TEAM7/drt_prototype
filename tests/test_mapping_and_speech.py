@@ -51,7 +51,7 @@ class SpeechTest(unittest.TestCase):
         self.assertEqual(speech.sanitize("DRT 차량을 부를까요?"), "이동 차량 차량을 부를까요?")
 
     def test_한자와_이모지는_지운다(self):
-        # Mi:dm이 답변 끝에 한자를 흘린 사례가 있었다.
+        # 모델 비교 과정에서 LLM이 답변 끝에 한자를 흘린 사례가 있었다.
         self.assertEqual(speech.sanitize("많이 힘드시겠어요.法"), "많이 힘드시겠어요.")
 
     def test_목적지_이름의_영문은_지우지_않고_보고만_한다(self):

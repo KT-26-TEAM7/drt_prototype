@@ -6,7 +6,7 @@
 ```
 2026.08.04_DRT/
 ├─ bridge/            ① 브릿지 — 케어콜 결과를 DRT로 넘기는 접착제 (이 프로젝트의 본체)
-├─ care_call_bot/     ④ 케어콜 대화·의도 분석 (Mi:dm / Gemini)
+├─ care_call_bot/     ④ 케어콜 대화·의도 분석 (Gemini)
 ├─ drt_service/       ② 정류장·경로·목적지·예약              → 포트 8001
 └─ mock_drt_server/   ③ 가상 DRT 서버 — 배차·차량추적·조회페이지 → 포트 8000
 ```
@@ -57,11 +57,11 @@ py scripts/run_stack.py  # 두 서버를 올바른 포트로 함께 띄우기
 가상환경에서 돌고, 서버끼리는 HTTP로만 이야기합니다.
 
 특히 브릿지는 `care_call_bot`을 import하지 않고 **분석기의 출력 JSON만을 계약**으로
-삼습니다. 그쪽은 torch·Gemini·faster-whisper 의존성과 macOS 전용 TTS 코드를 함께
-가지고 있어서, import하면 브릿지도 그 환경에서만 돌아가기 때문입니다. 덕분에
+삼습니다. 그쪽은 Gemini 의존성과 macOS 전용 TTS 코드를 가지고 있어서, import하면
+브릿지도 그 환경에서만 돌아가기 때문입니다. 덕분에
 
-- 구버전 분석기(`v4.py`)의 출력처럼 필드가 적어도 기본값으로 흡수하고,
-- 분석기가 Gemini를 쓰든 Mi:dm을 쓰든 브릿지는 영향을 받지 않으며,
+- 분석기 출력 필드가 일부 빠져 있어도 기본값으로 흡수하고,
+- 분석기 내부 구현이 바뀌어도 브릿지는 영향을 받지 않으며,
 - 네트워크·모델 없이 테스트가 돌아갑니다(76개, 0.3초).
 
 | 무엇이 | 무엇을 | 어떻게 |
@@ -107,7 +107,7 @@ py scripts/run_stack.py
 
 ## 케어콜 쪽에 붙이는 방법
 
-`chat_demo.py` / `gemini_chat_demo.py`가 매 턴 `analyze_conversation()`을 부르고 있으므로,
+`gemini_chat_demo.py`가 매 턴 `analyze_conversation()`을 부르고 있으므로,
 그 결과를 브릿지에 넘기고 나온 문장을 읽어 주면 됩니다.
 
 ```python

@@ -15,7 +15,7 @@
 2026.08.04_DRT/
 ├─ main_server/       ⓪ 메인 서버 — 통화를 소유하고 전체를 지휘 → 포트 8002
 ├─ bridge/            ① 브릿지 — 케어콜 결과를 DRT로 넘기는 접착제
-├─ care_call_bot/     ④ 케어콜 대화·의도 분석 (Mi:dm / Gemini)
+├─ care_call_bot/     ④ 케어콜 대화·의도 분석 (Gemini)
 ├─ drt_service/       ② 정류장·경로·목적지·예약          → 포트 8001
 ├─ mock_drt_server/   ③ 가상 DRT 서버 — 배차·차량추적·조회페이지 → 포트 8000
 ├─ scripts/           실행·점검 스크립트
@@ -87,11 +87,9 @@ py scripts\setup.py --check
 | 옵션 | 언제 |
 |---|---|
 | `--force` | 가상환경이 꼬였을 때. 지우고 다시 만듭니다 |
-| `--full-care-call` | 로컬 Mi:dm 대화(`chat_demo.py`)까지 쓸 때. **torch 등 수 GB** |
 | `--check` | 상태만 확인 |
 
-기본 설치는 케어콜 쪽에서 **의도 분석과 Gemini 대화에 필요한 것만** 넣습니다.
-로컬 Mi:dm 모델은 용량이 커서 일부러 빼 두었습니다.
+케어콜 쪽은 **의도 분석과 Gemini 대화에 필요한 것만** 설치합니다(로컬 모델 없음).
 
 ### 공통 주의 (Windows)
 
@@ -398,8 +396,7 @@ cd care_call_bot
 .\.venv\Scripts\python.exe gemini_chat_demo.py
 ```
 
-로컬 Mi:dm 대화(`chat_demo.py`)는 `py scripts\setup.py --full-care-call` 로 torch를
-설치해야 하고, 음성 입출력은 macOS 기준이라 Windows에서는 텍스트로만 동작합니다.
+음성 출력(TTS)은 macOS 내장 `say` 명령을 쓰므로 Windows에서는 텍스트로만 동작합니다.
 
 ---
 
