@@ -44,8 +44,11 @@ def check_real_booking(drt_url: str, dispatch_url: str, token: str) -> list[pref
     results: list[preflight.CheckResult] = []
     status, body = _post_json(
         f"{drt_url}/api/reservations",
+        # 사당솔밭도서관은 실제 TMAP에서도 이름이 유일하게 잡힌다. "남현서울정형외과"는
+        # 실제 TMAP에서 "서울정형외과의원" 등 비슷한 이름의 병원이 여러 곳 검색되어
+        # needs_destination_confirmation으로 멈추는 경우가 있어 점검용으로는 부적절하다.
         {"latitude": 37.4849, "longitude": 126.9710,
-         "query": "남현서울정형외과", "is_specific": True},
+         "query": "사당솔밭도서관", "is_specific": True},
         token,
     )
     if status != 200:
@@ -56,9 +59,13 @@ def check_real_booking(drt_url: str, dispatch_url: str, token: str) -> list[pref
 
     reservation = body.get("reservation")
     if not reservation:
+        reason = body.get("reason") or ""
+        if "확정할 수 없는" in reason:
+            hint = "목적지 후보가 여러 곳이거나 검색되지 않았을 수 있습니다. TMAP_APP_KEY 설정과 검색어를 확인하세요."
+        else:
+            hint = "배차 서버에 가용 차량이 있는지 확인하세요."
         results.append(preflight.CheckResult(
-            "실제 예약", False, f"예약이 만들어지지 않았습니다: {body.get('reason')}",
-            "배차 서버에 가용 차량이 있는지 확인하세요.",
+            "실제 예약", False, f"예약이 만들어지지 않았습니다: {reason}", hint,
         ))
         return results
 
