@@ -107,24 +107,21 @@ py scripts/run_stack.py
 
 ## 케어콜 쪽에 붙이는 방법
 
-`gemini_chat_demo.py`가 매 턴 `analyze_conversation()`을 부르고 있으므로,
-그 결과를 브릿지에 넘기고 나온 문장을 읽어 주면 됩니다.
+`care_call_bot/gemini_chat_demo.py`가 실제 연결 지점입니다. 분석·상태 관리·DRT
+판단은 전부 메인 서버(`main_server/app.py`)가 맡고, 이 스크립트는 발화를 메인
+서버의 `/call/utterance`에 넘긴 뒤 돌아온 `reply`를 화면에 찍고 TTS로 읽어 주는
+**입출력 껍데기**입니다.
 
 ```python
-from bridge.drt_client import DrtServiceClient
-from bridge.orchestrator import DrtHandoff
+started = post(f"{server}/call/start", {"user_id": user_id})
+session_id = started["session_id"]
+speak(started["reply"])                    # 다솜이의 첫인사
 
-handoff = DrtHandoff(DrtServiceClient())
-
-# 매 턴, 분석 결과를 넘긴다
-outcome = handoff.handle_analysis(user_id, drt_result)
-if outcome.text:
-    speak(outcome.text)          # 다솜이 목소리로 읽어 준다
-
-# 되물었으면 다음 턴의 답을 이어서 넘긴다
-if outcome.expects:
-    outcome = handoff.handle_reply(user_id, user_input)
+reply = post(f"{server}/call/utterance", {"session_id": session_id, "text": user_input})
+speak(reply["reply"])                       # 이번 턴에 할 말(DRT 안내 또는 안부 대화)
 ```
+
+`py scripts\run_stack.py`로 세 서버를 띄운 뒤 `cd care_call_bot && .venv\Scripts\python.exe gemini_chat_demo.py`로 바로 시도해 볼 수 있습니다.
 
 ## 구성
 

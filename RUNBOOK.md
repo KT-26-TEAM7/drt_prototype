@@ -312,6 +312,9 @@ py scripts\run_handoff.py --all --offline --reply "응 불러줘"
 > **한글이 깨지거나 `error parsing the body`가 뜨면** `curl`로 직접 한글을 보내지
 > 마세요. Windows 콘솔에서 인코딩이 깨집니다. 위 스크립트(파이썬)를 쓰면 됩니다.
 
+정해진 시나리오 없이 직접 말을 걸고, 동의 절차와 실제 음성 출력까지 보고 싶으면
+§4-5의 `gemini_chat_demo.py`를 쓰세요.
+
 ### 4-2. 배차 연동만 확인
 
 케어콜 없이 `drt_service → 배차 서버` 만 떼어 봅니다.
@@ -389,14 +392,19 @@ http://localhost:8000/tracking?token=<토큰>
 `care_call_bot\.env`에 `GEMINI_KEY`가 없으면 분석기가 규칙 기반으로만 동작합니다
 (경고를 출력하고 계속 진행합니다).
 
-케어콜 대화 자체를 보려면 분석기 폴더에서 직접 실행합니다.
+**실제 통화처럼(동의 절차 + 음성 출력) 보려면** 먼저 §2-1로 세 서버를 띄운 뒤
+케어콜 폴더에서 실행합니다. `call_demo.py`와 달리 시나리오가 정해져 있지 않고
+직접 말을 걸 수 있으며, 동의 절차를 거치고 응답을 실제 음성으로 들려줍니다.
 
 ```powershell
 cd care_call_bot
 .\.venv\Scripts\python.exe gemini_chat_demo.py
 ```
 
-음성 출력(TTS)은 macOS 내장 `say` 명령을 쓰므로 Windows에서는 텍스트로만 동작합니다.
+대화 상태·DRT 판단은 이 스크립트가 아니라 메인 서버가 맡습니다. 이 스크립트는
+발화를 메인 서버의 `/call/utterance`로 넘기고 응답을 읽어 주기만 하는 입출력
+껍데기라, 세 서버가 떠 있지 않으면 바로 종료됩니다. 음성 출력(TTS)은 macOS
+내장 `say` 명령을 쓰므로 Windows에서는 텍스트로만 동작합니다.
 
 ---
 

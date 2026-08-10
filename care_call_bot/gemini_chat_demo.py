@@ -1,56 +1,30 @@
-"""Gemini API 기반 어르신 안부 케어콜 챗봇 데모.
+"""메인 서버에 붙어 실제로 통화하는 케어콜 클라이언트(음성 출력 포함).
 
-`prompts/system_prompt.txt`의 페르소나를 그대로 사용해 Gemini API를 호출한다.
-매 턴마다 응답 소요 시간을 함께 출력한다.
+대화 상태 관리·의도 분석·DRT 판단은 전부 메인 서버(`main_server/app.py`)가 맡는다.
+이 스크립트는 어르신 발화를 받아 메인 서버의 `/call/utterance`에 넘기고, 돌아온
+응답을 화면에 찍고 TTS로 읽어 주는 **입출력 껍데기** 역할만 한다
+(`scripts/call_demo.py`와 같은 방식이지만, 여기는 동의 절차와 실제 음성 출력이 있다).
 
 실행 전:
-    .env 파일에 GEMINI_KEY="발급받은 API 키" 를 넣어두세요.
+    py scripts\\run_stack.py 로 배차 서버·drt_service·메인 서버를 먼저 띄워두세요.
 
 실행:
-    python gemini_chat_demo.py                       # 기본 모델(gemini-flash-latest)
-    python gemini_chat_demo.py --model gemini-2.5-flash-lite
+    python gemini_chat_demo.py
+    python gemini_chat_demo.py --server http://127.0.0.1:8002
     python gemini_chat_demo.py --no-tts               # 음성 출력(TTS) 끄기
 """
 
 import argparse
-import os
-import time
-from pathlib import Path
-
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+import json
+import sys
+import urllib.error
+import urllib.request
 
 import consent
-import drt_analyzer
 
-SYSTEM_PROMPT_PATH = Path(__file__).parent / "prompts" / "system_prompt.txt"
+DEFAULT_SERVER = "http://127.0.0.1:8002"
 
-# 케어콜은 봇이 먼저 말을 건다. 첫인사는 고정 멘트로 시작.
-GREETING = "안녕하세요, 어르신. 말벗 다솜이예요. 요즘 잘 지내고 계세요?"
-
-# 모델명은 Gemini 쪽 라인업이 자주 바뀌므로, 특정 버전에 고정하지 않고
-# "가장 빠른 최신 flash 모델"을 가리키는 별칭을 기본값으로 사용한다.
-DEFAULT_MODEL = "gemini-flash-latest"
-
-END_CALL_MARKER = "[통화종료]"
-
-
-def load_client() -> genai.Client:
-    load_dotenv()
-    api_key = os.getenv("GEMINI_KEY")
-    if not api_key:
-        raise SystemExit(
-            "GEMINI_KEY를 찾지 못했습니다. 프로젝트 루트 .env 파일에 "
-            'GEMINI_KEY="발급받은 API 키" 를 넣어주세요.'
-        )
-    return genai.Client(api_key=api_key)
-
-
-def check_end_call(reply: str) -> tuple[str, bool]:
-    if END_CALL_MARKER in reply:
-        return reply.replace(END_CALL_MARKER, "").strip(), True
-    return reply, False
+SPEAKER_LABEL = {"dasom": "다솜이", "drt": "다솜이(안내)", "system": "시스템"}
 
 
 def find_korean_voice() -> str | None:
@@ -74,14 +48,39 @@ def speak(text: str, voice: str | None):
     subprocess.run(["say", "-v", voice, text])
 
 
+def post(url: str, payload: dict) -> dict:
+    request = urllib.request.Request(
+        url, data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        body = error.read().decode("utf-8", errors="replace")
+        raise SystemExit(f"요청 실패({error.code}): {body[:200]}")
+    except urllib.error.URLError as error:
+        raise SystemExit(
+            f"메인 서버에 붙지 못했습니다: {url}\n  {error.reason}\n"
+            "  py scripts/run_stack.py 로 먼저 띄우세요."
+        )
+
+
+def say_and_print(text: str, voice: str | None, who: str = "다솜이") -> None:
+    if not text:
+        return
+    print(f"{who}: {text}")
+    speak(text, voice)
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Gemini API 기반 케어콜 챗봇 데모")
-    parser.add_argument("--model", default=DEFAULT_MODEL, help=f"Gemini 모델명 (기본 {DEFAULT_MODEL})")
+    parser = argparse.ArgumentParser(description="메인 서버에 붙는 케어콜 통화 데모(TTS 포함)")
+    parser.add_argument("--server", default=DEFAULT_SERVER, help=f"메인 서버 주소 (기본 {DEFAULT_SERVER})")
+    parser.add_argument("--user", default="elder_demo_01", help="어르신 프로필 ID")
     parser.add_argument("--no-tts", action="store_true", help="음성 출력(TTS) 끄기")
     args = parser.parse_args()
 
-    client = load_client()
-    system_prompt = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
+    sys.stdout.reconfigure(line_buffering=True)
 
     tts_voice = None if args.no_tts else find_korean_voice()
     if not args.no_tts and tts_voice is None:
@@ -90,28 +89,20 @@ def main() -> None:
     agreed = consent.get_consent(
         ask_fn=lambda: input().strip(),
         speak_fn=lambda text: speak(text, tts_voice),
-        channel="gemini-api",
+        channel="main-server",
     )
     if not agreed:
-        print(f"다솜이: {consent.DECLINE_FAREWELL}")
-        speak(consent.DECLINE_FAREWELL, tts_voice)
+        say_and_print(consent.DECLINE_FAREWELL, tts_voice)
         return
 
-    chat = client.chats.create(
-        model=args.model,
-        config=types.GenerateContentConfig(system_instruction=system_prompt),
-        history=[
-            types.Content(role="model", parts=[types.Part(text=GREETING)]),
-        ],
-    )
+    root = json.loads(urllib.request.urlopen(f"{args.server}/", timeout=10).read())
+    print(f"(메인 서버: 분석기={root.get('analyzer')} / 대화={root.get('conversation')})")
 
-    print(f"(모델: {args.model})")
-    print()
-    print(f"다솜이(Gemini): {GREETING}")
-    speak(GREETING, tts_voice)
+    started = post(f"{args.server}/call/start", {"user_id": args.user})
+    session_id = started["session_id"]
+    say_and_print(started["reply"], tts_voice)
 
-    drt_transcript: list[str] = []
-
+    call_ended = False
     while True:
         try:
             user_input = input("어르신: ").strip()
@@ -122,26 +113,25 @@ def main() -> None:
         if not user_input:
             continue
         if user_input in ("종료", "끝", "quit", "exit"):
-            farewell = "오늘 이야기 나눠서 즐거웠어요. 또 전화드릴게요. 건강히 지내세요."
-            print(f"다솜이(Gemini): {farewell}")
-            speak(farewell, tts_voice)
             break
 
-        start = time.time()
-        response = chat.send_message(user_input)
-        elapsed = time.time() - start
+        reply = post(f"{args.server}/call/utterance",
+                     {"session_id": session_id, "text": user_input})
+        who = SPEAKER_LABEL.get(reply.get("speaker", ""), "다솜이")
+        say_and_print(reply["reply"], tts_voice, who)
+        if reply.get("tracking_url"):
+            print(f"  조회 링크: {reply['tracking_url']}")
+        if reply.get("sms_sent"):
+            print(f"  문자 발송: {','.join(reply['sms_sent'])}")
 
-        reply, end_call = check_end_call(response.text or "")
-        print(f"다솜이(Gemini): {reply}  [{elapsed:.2f}초]")
-        speak(reply, tts_voice)
-
-        drt_transcript.append(f"어르신: {user_input}")
-        drt_result = drt_analyzer.analyze_conversation("\n".join(drt_transcript))
-        print(drt_analyzer.format_drt_summary(drt_result))
-
-        if end_call:
-            print("(통화를 마칩니다.)")
+        if reply.get("call_ended"):
+            call_ended = True
             break
+
+    ended = post(f"{args.server}/call/end", {"session_id": session_id, "text": "종료"})
+    if not call_ended:
+        say_and_print(ended.get("reply", ""), tts_voice)
+    print("(통화를 마칩니다.)")
 
 
 if __name__ == "__main__":
