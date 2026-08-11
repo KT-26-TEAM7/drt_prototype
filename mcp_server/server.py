@@ -34,7 +34,12 @@ from starlette.routing import Route
 
 MAIN_SERVER_BASE_URL = os.environ.get("MAIN_SERVER_BASE_URL", "http://127.0.0.1:8002").rstrip("/")
 MAIN_SERVER_TOKEN = os.environ.get("MAIN_SERVER_TOKEN", "").strip()
-HTTP_TIMEOUT_S = float(os.environ.get("MAIN_SERVER_TIMEOUT_S", "10"))
+# Render 무료 플랜은 유휴 시 스핀다운되고 다음 요청에서 최대 ~1분 콜드 스타트한다.
+# 기본 타임아웃을 짧게 두면 콜드 스타트 중인 main_server를 "연결 불가"로 오판해
+# 실제 통화에서 실패 문구가 나간다(2026-08-11 실제 통화에서 확인). 60초로 늘려
+# 콜드 스타트를 기다릴 여유를 준다 — 상시 구동(Starter) 플랜으로 올리면 이 여유가
+# 필요 없어지지만, 그 전까지는 이 값이 실패보다는 몇십 초 대기가 낫다는 판단이다.
+HTTP_TIMEOUT_S = float(os.environ.get("MAIN_SERVER_TIMEOUT_S", "60"))
 FALLBACK_REPLY = "죄송해요, 지금 잠깐 연결이 원활하지 않아요. 잠시 후에 다시 말씀해 주시겠어요?"
 
 mcp = FastMCP("다솜이 DRT 통화 도구")

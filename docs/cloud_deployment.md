@@ -187,8 +187,17 @@ repo root의 `render.yaml`이 4개 서비스를 한 번에 정의한다. Render 
 | `mcp-server` | `MAIN_SERVER_TOKEN` | `main-server`와 동일한 값 |
 
 나머지(서비스 간 URL 등)는 `render.yaml`에 이미 고정값으로 들어 있다 — 서비스
-이름(`name:`)이 `https://<이름>.onrender.com`을 그대로 결정하므로, `fromService`
+이름(`name:`)이 보통 `https://<이름>.onrender.com`을 그대로 결정하므로, `fromService`
 참조 대신 직접 고정값을 썼다.
+
+> **주의 — 이름 충돌 시 실제 주소가 달라진다.** `.onrender.com` 서브도메인은 Render
+> 전역에서 유일해야 해서, 이미 다른 계정이 그 이름을 쓰고 있으면 임의 접미사가 붙은
+> 주소가 배정된다. **이 팀의 실제 배포에서 `main-server`는 `main-server-ecm1`로,
+> `mcp-server`는 `mcp-server-iyjw`로 배정됐다**(`drt-service`, `mock-drt-server`는
+> 충돌 없이 이름 그대로 배정됨). `render.yaml`의 `MAIN_SERVER_BASE_URL` 값도 이미
+> `main-server-ecm1.onrender.com`으로 맞춰 놓았다. 새로 배포하거나 서비스를
+> 지우고 다시 만들면 접미사가 또 바뀔 수 있으니, **배포 후 각 서비스 페이지 상단의
+> 실제 URL을 항상 다시 확인하세요.**
 
 ### SQLite는 당분간 영구 디스크 없이(ephemeral) 간다
 
@@ -227,7 +236,7 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
 3. **`main-server`를 배포**하고, 로컬에 있는 스크립트를 그대로 클라우드 대상으로
    돌려 본다:
    ```powershell
-   py scripts\call_demo.py --server https://main-server.onrender.com
+   py scripts\call_demo.py --server https://main-server-ecm1.onrender.com
    ```
    (단, `MAIN_SERVER_TOKEN`을 설정했다면 `call_demo.py`는 토큰 헤더를 안 보내므로
    401이 납니다 — 이 스크립트는 토큰 없이 확인하고 싶을 때만 쓰고, 인증까지
@@ -236,12 +245,12 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
    `fastmcp`의 `Client`로 직접 확인:
    ```python
    from fastmcp import Client
-   async with Client("https://mcp-server.onrender.com/mcp") as client:
+   async with Client("https://mcp-server-iyjw.onrender.com/mcp") as client:
        r = await client.call_tool("start_call", {"user_id": "elder_demo_01"})
        print(r.data)
    ```
 5. **그다음에만 ClawOps "외부 도구 연결" 폼을 열어** 정확한 전송 방식/URL 형식을
-   "연결 테스트" 버튼으로 확인한다 — MCP URL은 `https://mcp-server.onrender.com/mcp`.
+   "연결 테스트" 버튼으로 확인한다 — MCP URL은 `https://mcp-server-iyjw.onrender.com/mcp`.
 6. **연결이 성공한 뒤에만** 6절의 시스템 프롬프트 추가분을 채워 넣고 실제 테스트 통화.
 7. 콜드 스타트가 체감됐다면 그때 유료 플랜 전환을 결정한다.
 
@@ -251,7 +260,7 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
 
 ### "외부 도구 연결"에 등록할 값
 
-- **MCP 서버 주소**: `https://mcp-server.onrender.com/mcp`
+- **MCP 서버 주소**: `https://mcp-server-iyjw.onrender.com/mcp`
 - ClawOps가 인증 헤더를 지원하는 형식을 요구하면, `mcp_server` 자체를 잠글지는
   추가로 검토가 필요하다(현재는 잠그지 않음 — `mcp_server`가 할 수 있는 일은 어차피
   `main_server`가 토큰으로 보호하는 3가지 통화 동작뿐이라 데모 단계에서는 위험이
@@ -298,5 +307,26 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
 | `mcp_server` 첫 요청마다 `Task group is not initialized` | `Starlette` 부모 앱에 `lifespan=mcp_app.lifespan`을 안 넘김 | `mcp_server/server.py`의 앱 조립부 확인 |
 | `main-server`/`drt-service` 401 | 토큰이 서로 안 맞음 | Render 대시보드에서 `RELAY_API_TOKEN`(drt-service↔main-server), `MAIN_SERVER_TOKEN`(main-server↔mcp-server) 값이 양쪽 서비스에서 정확히 같은지 확인 |
 | `send_utterance`가 계속 `session_not_found`(404) | `main-server`가 재배포·재시작돼 인메모리 세션이 날아감(`ConversationStore`가 프로세스 메모리에만 있음), 또는 콜드 스타트 중 다른 인스턴스로 라우팅됨 | 통화 중 재배포하지 않기. 무료 플랜의 여러 인스턴스 분산이 의심되면 유료 플랜에서 인스턴스 수 확인 |
-| 통화 시작 인사가 몇십 초 늦게 나옴 | 콜드 스타트(4절) | `main-server`/`mcp-server`를 Starter로 올리거나, 데모 직전에 미리 요청 한 번씩 보내 깨워 둠 |
+| 통화 시작 인사가 몇십 초 늦게 나옴, 또는 (아래) | 콜드 스타트(4절) | `main-server`/`mcp-server`를 Starter로 올리거나, 데모 직전에 미리 요청 한 번씩 보내 깨워 둠 |
 | `docker build` 안 해봄 | 이 문서를 쓴 환경에 Docker가 없었음(3절 참고) | 실제 빌드 가능한 환경에서 한 번 확인 |
+
+### 실제 발생 기록 — 콜드 스타트로 통화 전체가 실패 (2026-08-11)
+
+실제 ClawOps 테스트 통화에서 처음부터 끝까지 다음 고정 문구만 반복됐다:
+
+```
+죄송해요, 지금 잠깐 연결이 원활하지 않아요. 잠시 후에 다시 말씀해 주시겠어요?
+통화가 아직 시작되지 않았어요. (이후 매 턴 반복)
+```
+
+통화 녹음을 로컬 `faster-whisper`로 직접 전사해서 원인을 확인했다(오디오는 읽지 못하는
+도구가 많으니, 이 프로젝트에 이미 설치된 STT로 대신 돌리는 것도 방법이다). 첫 문구는
+`mcp_server`의 `start_call` 실패용 문구, 두 번째는 `send_utterance`가 빈
+`session_id`를 받았을 때 문구다 — 즉 **`start_call`이 실패해서 세션 자체가 안
+만들어졌고, 그 뒤 모든 턴이 연쇄적으로 실패했다.**
+
+직후 `main-server`를 직접 호출해 재현: 응답에 **22.4초**가 걸렸다(콜드 스타트 진행
+중). 당시 `mcp_server`의 타임아웃은 10초였다 — 그래서 실패로 처리됐다. `MAIN_SERVER_TIMEOUT_S`
+기본값을 60초로 올려서(§1, `mcp_server/server.py`) 콜드 스타트를 기다릴 여유를 줬다.
+다만 이건 완화책이지 근본 해결은 아니다 — 여전히 통화 시작에 몇십 초 무음이 생길 수
+있으므로, 실제 데모 전에는 `main-server`/`mcp-server`를 Starter로 올리는 게 맞다.

@@ -5,8 +5,11 @@
 # 직접 입력해야 한다(비밀값이거나, 배포 후에만 정해지는 값). 자세한 설명과 값
 # 채우는 순서는 docs/cloud_deployment.md를 보세요.
 #
-# 서비스 이름(name)이 공개 URL(https://<name>.onrender.com)을 그대로 결정하므로
-# 함부로 바꾸지 마세요 — 다른 서비스의 env var가 그 URL을 고정값으로 참조합니다.
+# 서비스 이름(name)이 보통 공개 URL(https://<name>.onrender.com)을 그대로 결정하지만,
+# 그 이름을 Render 전역에서 이미 다른 계정이 쓰고 있으면 임의 접미사가 붙은 실제
+# 주소가 배정된다(실제로 main-server → main-server-ecm1, mcp-server → mcp-server-iyjw로
+# 배정된 사례가 있었다). **배포 후 각 서비스 페이지 상단의 실제 URL을 확인해서, 아래
+# env var들의 고정값이 실제와 다르면 대시보드에서 직접 고쳐야 한다.**
 
 services:
   # ── ③ 배차 서버 ──────────────────────────────────────────────────────────
@@ -95,10 +98,14 @@ services:
     dockerContext: ./mcp_server
     healthCheckPath: /healthz
     envVars:
+      # 실제 배정 주소가 다를 수 있음(파일 상단 주석 참고) — 이 저장소 배포본은
+      # 실제로 main-server-ecm1.onrender.com으로 배정됐다.
       - key: MAIN_SERVER_BASE_URL
-        value: https://main-server.onrender.com
+        value: https://main-server-ecm1.onrender.com
       # main-server와 동일한 값으로 직접 입력
       - key: MAIN_SERVER_TOKEN
         sync: false
+      # Render 무료 플랜 콜드 스타트(최대 ~1분)를 견디도록 여유 있게 잡는다.
+      # main-server를 Starter(상시 구동)로 올리면 낮춰도 된다.
       - key: MAIN_SERVER_TIMEOUT_S
-        value: "10"
+        value: "60"
