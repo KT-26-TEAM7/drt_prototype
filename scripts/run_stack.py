@@ -113,7 +113,7 @@ def start_server(
 def check_main_server(url: str) -> preflight.CheckResult:
     """메인 서버가 응답하는지. 배차 서버·drt_service와 같은 방식으로 점검한다.
 
-    메인 서버는 care_call_bot 분석기를 로딩하느라 다른 둘보다 기동이 느릴 수 있어서,
+    메인 서버는 carecall_drt(+Gemini)를 로딩하느라 다른 둘보다 기동이 느릴 수 있어서,
     이 점검이 없으면 "모두 정상입니다"가 뜬 뒤에도 몇 초간 8002가 응답하지 않을 수 있다.
     """
     name = "메인 서버 응답"
@@ -128,7 +128,7 @@ def check_main_server(url: str) -> preflight.CheckResult:
     except ValueError:
         return preflight.CheckResult(name, False, "응답이 JSON이 아닙니다")
     return preflight.CheckResult(
-        name, True, f"{root.get('service')} (분석기={root.get('analyzer')})"
+        name, True, f"{root.get('service')} (응답기={root.get('responder')})"
     )
 
 

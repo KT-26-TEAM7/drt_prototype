@@ -1,28 +1,25 @@
 """메인 서버 — 통화를 소유하고 전체 흐름을 지휘한다.
 
-프레임워크에서 "메인 서버"라고 부르던 자리다. 지금까지는 이 자리가 비어 있어서
-케어콜은 CLI(`while True: input()`)였고, 두 FastAPI 서버는 대화를 몰랐다.
-
     사용자 발화(STT 결과)
         │
         ▼  POST /call/utterance
-    ┌─────────────────────────────────────────────┐
-    │ 메인 서버                                    │
-    │  ① 이동 의도·목적지 분석   analyzer.py        │  ← 최신 한 마디만
-    │  ② 대화 상태 관리          conversation.py    │  ← 상태 기계
-    │  ③ 누가 말할지 결정        아래 _decide       │
-    │  ④ 장소·정류장·경로·예약   bridge/            │
-    └─────────────────────────────────────────────┘
+    ┌─────────────────────────────────────────────────────┐
+    │ 메인 서버                                            │
+    │  carecall_drt.CareCallDRTOrchestrator                │
+    │   ① 대화 분석 + 다중 턴 상태     analyzer.py/schemas  │
+    │   ② 다솜이 응답(+DRT 의미 보강)  responder            │
+    │   ③ DRT 계획/예약 호출           backend.py           │
+    │  main_server.care_bridge.CareCallBridge (이 워크스페이스 어댑터)  │
+    │   ④ 위치(GPS 없음 우회)·음성규칙(TTS)·문자·추적링크검증 │
+    └─────────────────────────────────────────────────────┘
         │                    │
         ▼                    ▼
     응답 문장(TTS로)      drt_service → 가상 DRT 서버 → 문자
 
-핵심 두 가지:
-
-- **대화 상태를 누적 텍스트가 아니라 상태로 관리한다.** 분석기에는 최신 발화 한
-  마디만 넘기므로, 앞선 "집에 있을래"가 나중 "역시 병원 가야겠어"를 이기지 않는다.
-- **한 턴에 한 마디만 말한다.** DRT가 할 말이 있으면 그것만, 없으면 다솜이가
-  안부 대화를 잇는다.
+carecall_drt 자체가 "최신 발화만 보고도 앞선 거절을 뒤집을 수 있는" 다중 턴
+`SessionState`를 갖고 있어(이전에는 `main_server/conversation.py`가 이 문제를
+따로 우회했다), 여기서는 세션마다 그 상태를 들고 있기만 하면 된다. 무엇을
+대체했는지는 `docs/04_carecall_drt_이식.md` 참고.
 """
 from __future__ import annotations
 
@@ -41,17 +38,7 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
 
-from bridge.config import settings as bridge_settings  # noqa: E402
-from bridge.drt_client import DrtServiceClient  # noqa: E402
-from bridge.location import ProfileStore  # noqa: E402
-from bridge.orchestrator import (  # noqa: E402
-    ACTION_ESCALATE,
-    ACTION_RESERVED,
-    DrtHandoff,
-)
-from main_server import analyzer as analyzer_module  # noqa: E402
-from main_server import talk  # noqa: E402
-from main_server.conversation import ConversationStore, TurnFacts  # noqa: E402
+from main_server.care_bridge import FAREWELL, CareCallBridge  # noqa: E402
 
 
 # ── 인증 ─────────────────────────────────────────────────────────────────
@@ -106,20 +93,7 @@ class UtteranceResponse(BaseModel):
 def create_app() -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        app.state.sessions = ConversationStore()
-        app.state.talker = talk.CareCallTalker()
-        app.state.handoff = DrtHandoff(
-            DrtServiceClient(),
-            ProfileStore.load(bridge_settings.profiles_path),
-            bridge_settings,
-        )
-        # 분석기는 없어도 서버가 뜬다. 얕은 규칙으로 대신한다.
-        try:
-            app.state.analyze = analyzer_module.load_analyzer()
-            app.state.analyzer_source = "care_call_bot"
-        except analyzer_module.AnalyzerUnavailable as exc:
-            app.state.analyze = analyzer_module.fallback_analyze
-            app.state.analyzer_source = f"fallback ({exc})"
+        app.state.care = CareCallBridge()
         yield
 
     application = FastAPI(
@@ -131,13 +105,14 @@ def create_app() -> FastAPI:
 
     @application.get("/", tags=["system"])
     def root() -> dict:
+        care: CareCallBridge = application.state.care
         return {
             "status": "ok",
             "service": "케어콜 DRT 메인 서버",
-            "analyzer": application.state.analyzer_source,
-            "conversation": "llm" if application.state.talker.uses_llm else "fallback",
-            "drt_service": bridge_settings.drt_base_url,
-            "active_calls": application.state.sessions.active_count(),
+            "responder": care.responder_source,
+            "drt_backend_enabled": care.settings.drt_enabled,
+            "drt_backend_url": care.settings.drt_base_url,
+            "active_calls": care.active_count(),
             "docs": "/docs",
         }
 
@@ -145,53 +120,30 @@ def create_app() -> FastAPI:
                       dependencies=[Depends(require_call_token)])
     def start_call(payload: StartCallRequest) -> StartCallResponse:
         session_id = f"CALL-{uuid.uuid4().hex[:10].upper()}"
-        application.state.sessions.create(session_id, payload.user_id)
-        # 브릿지 세션은 사용자별로 남아 있다. 지난 통화에서 되물어 둔 것이 그대로면
-        # 이번 통화의 첫 마디를 그 답으로 잘못 받아들인다. 새 통화는 새로 시작한다.
-        application.state.handoff.sessions.reset(payload.user_id)
+        care: CareCallBridge = application.state.care
         # 첫인사는 고정 멘트다. 도입부가 매번 같아야 어르신이 혼란스럽지 않다.
-        return StartCallResponse(session_id=session_id, reply=talk.GREETING)
+        greeting = care.start_call(session_id, payload.user_id)
+        return StartCallResponse(session_id=session_id, reply=greeting)
 
     @application.post("/call/utterance", response_model=UtteranceResponse, tags=["call"],
                       dependencies=[Depends(require_call_token)])
     def handle_utterance(payload: UtteranceRequest) -> UtteranceResponse:
-        state = application.state.sessions.get(payload.session_id)
-        if state is None:
+        care: CareCallBridge = application.state.care
+        try:
+            outcome = care.handle_utterance(payload.session_id, payload.text)
+        except KeyError:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "통화 세션을 찾을 수 없습니다.")
 
-        handoff: DrtHandoff = application.state.handoff
-
-        # 되물어 둔 것이 있으면 이번 발화를 그 답으로 먼저 해석한다.
-        # (후보 선택, 예약 확인 — 브릿지가 상태를 들고 있다)
-        session = handoff.sessions.get(state.user_id)
-        if session.awaiting:
-            outcome = handoff.handle_reply(state.user_id, payload.text)
-            if outcome.action == ACTION_RESERVED:
-                state.mark_reserved()
-            if outcome.text:
-                return _drt_response(outcome, state)
-
-        # ① 최신 발화 한 마디만 분석한다. 대화 전체를 넘기지 않는 것이 핵심이다.
-        turn = application.state.analyze(payload.text)
-        # ② 상태 기계에 병합한다. 나중 발화가 앞선 발화를 뒤집을 수 있다.
-        state.apply(TurnFacts.from_analyzer_output(turn))
-        # ③ 누적된 상태를 분석기 형태로 되돌려 브릿지에 넘긴다.
-        outcome = handoff.handle_analysis(state.user_id, state.to_analyzer_output())
-        if outcome.action == ACTION_RESERVED:
-            state.mark_reserved()
-
-        # ④ 한 턴에 한 마디만. DRT가 할 말이 있으면 그것만 말한다.
-        if outcome.text:
-            return _drt_response(outcome, state)
-
-        # DRT 쪽에서 할 말이 없으면 다솜이가 안부 대화를 잇는다.
-        reply, ended = application.state.talker.reply(payload.session_id, payload.text)
         return UtteranceResponse(
-            reply=reply or talk.FAREWELL,
-            speaker="dasom",
-            call_ended=ended,
-            drt_action=outcome.code,
-            state=state.snapshot(),
+            reply=outcome.reply,
+            speaker=outcome.speaker,
+            # 예약 확인 대기 중일 때만 "네/아니오"류 답을 기다린다고 알려 준다.
+            expects="reservation_confirm" if outcome.drt_action == "awaiting_confirmation" else "",
+            call_ended=outcome.call_ended,
+            drt_action=outcome.drt_action,
+            tracking_url=outcome.tracking_url,
+            sms_sent=outcome.sms_sent,
+            state=outcome.state,
         )
 
     @application.post("/call/end", tags=["call"], dependencies=[Depends(require_call_token)])
@@ -199,35 +151,20 @@ def create_app() -> FastAPI:
         target = session_id or (payload.session_id if payload else "")
         if not target:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "session_id가 필요합니다.")
-        state = application.state.sessions.get(target)
-        if state is not None:
-            # 통화가 끝나면 브릿지 쪽 되물음 상태도 함께 정리한다.
-            application.state.handoff.sessions.reset(state.user_id)
-        application.state.talker.end(target)
-        ended = application.state.sessions.end(target)
-        return {"ok": ended, "reply": talk.FAREWELL}
+        care: CareCallBridge = application.state.care
+        care.end_call(target)
+        return {"ok": True, "reply": FAREWELL}
 
     @application.get("/call/{session_id}/state", tags=["call"],
                      dependencies=[Depends(require_call_token)])
     def call_state(session_id: str) -> dict:
-        state = application.state.sessions.get(session_id)
+        care: CareCallBridge = application.state.care
+        state = care.get_state(session_id)
         if state is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "통화 세션을 찾을 수 없습니다.")
-        return state.snapshot()
+        return state
 
     return application
-
-
-def _drt_response(outcome: Any, state: Any) -> UtteranceResponse:
-    return UtteranceResponse(
-        reply=outcome.text,
-        speaker="system" if outcome.action == ACTION_ESCALATE else "drt",
-        expects=outcome.expects,
-        drt_action=outcome.code,
-        tracking_url=outcome.tracking_url,
-        sms_sent=[message.role for message in outcome.sms_messages],
-        state=state.snapshot(),
-    )
 
 
 app = create_app()

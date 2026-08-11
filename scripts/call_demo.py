@@ -29,8 +29,16 @@ SCENARIOS: dict[str, list[str]] = {
         "가까운 정형외과로 해줘.",
         "응 불러줘",
     ],
+    # carecall_drt는 즉시 배차 전에 날짜·시간·픽업위치까지 슬롯으로 확인한다
+    # (drt_service 자체는 여전히 이 값들을 받지 않는 즉시 호출 모델이지만, 대화
+    # 흐름은 다 여쭤본 뒤에 계획을 세운다 — docs/04_carecall_drt_이식.md 참고).
     "basic": [
         "남현서울정형외과에 가야 하는데 차 좀 불러줘.",
+        "응 불러줘",
+        "오늘",
+        "오전 열시",
+        "집 앞에서 탈게",
+        "서울정형외과의원으로 해줘",
         "응 불러줘",
     ],
     "emergency": [
@@ -68,9 +76,9 @@ def show(reply: dict) -> None:
     )
     print(f"  {who} : {reply['reply']}")
     state = reply.get("state") or {}
-    details = [f"단계={state.get('stage')}"]
-    if state.get("destination") and state["destination"] != "unknown":
-        details.append(f"목적지={state['destination']}")
+    details = [f"단계={state.get('dialogue_stage')}"]
+    if state.get("destination_category") and state["destination_category"] != "unknown":
+        details.append(f"목적지={state['destination_category']}")
     if reply.get("expects"):
         details.append(f"기다림={reply['expects']}")
     if reply.get("drt_action"):
@@ -93,7 +101,7 @@ def main() -> None:
     sys.stdout.reconfigure(line_buffering=True)
 
     root = json.loads(urllib.request.urlopen(f"{args.server}/", timeout=10).read())
-    print(f"메인 서버: 분석기={root.get('analyzer')} / 대화={root.get('conversation')}")
+    print(f"메인 서버: 응답기={root.get('responder')} / DRT 백엔드={root.get('drt_backend_enabled')}")
 
     scenarios = {args.scenario: SCENARIOS[args.scenario]} if args.scenario else SCENARIOS
     if args.interactive:

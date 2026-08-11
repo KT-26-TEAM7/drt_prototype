@@ -1,12 +1,7 @@
-# Gemini API 대화 데모 (gemini_chat_demo.py) 및 의도 분석기(drt_analyzer.py)
-google-genai
-python-dotenv
-
-# 음성 입력 (gemini_chat_demo.py --voice, voice_io.py 공용). torch가 필요 없다
-# (CTranslate2 기반 로컬 Whisper, 오프라인·무료).
+# 케어콜 대화·DRT 의도 분석은 carecall_drt(워크스페이스 루트)로 이식되었다
+# (docs/04_carecall_drt_이식.md 참고). 여기 남은 것은 DRT와 무관한 파트뿐이다:
+# consent.py(통화 동의)와 voice_io.py(음성 입력, torch 불필요 —
+# CTranslate2 기반 로컬 Whisper, 오프라인·무료).
 faster-whisper
 sounddevice
 numpy
-
-# OpenAI Realtime API 데모 (openai_chat_demo.py)
-websockets>=13.0

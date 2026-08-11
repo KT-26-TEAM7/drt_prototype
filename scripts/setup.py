@@ -132,10 +132,9 @@ def check_only() -> None:
     print("설치 상태")
     print("-" * 58)
     rows = [
-        ("브릿지", BRIDGE_DIR, BRIDGE_DIR / "bridge" / "orchestrator.py"),
+        ("브릿지 · 메인 서버", BRIDGE_DIR, BRIDGE_DIR / "carecall_drt" / "orchestrator.py"),
         ("drt_service", SERVICE_DIR, SERVICE_DIR / "app" / "main.py"),
         ("배차 서버", DISPATCH_DIR, DISPATCH_DIR / "app" / "main.py"),
-        ("케어콜 분석기", CARE_CALL_DIR, CARE_CALL_DIR / "drt_analyzer.py"),
     ]
     # 한글은 폭이 두 배라 자릿수 맞추기가 어긋난다. 정렬 대신 구분자로 읽히게 둔다.
     for label, directory, marker in rows:
@@ -153,6 +152,7 @@ def check_only() -> None:
     print(f"  Gemini 키 · 케어콜    — {_key_state(CARE_CALL_DIR / '.env', 'GEMINI_KEY')}")
     print(f"  릴레이 토큰 · drt_service — {_key_state(SERVICE_DIR / '.env', 'RELAY_API_TOKEN')}")
     print(f"  릴레이 토큰 · 브릿지      — {_key_state(BRIDGE_DIR / '.env', 'RELAY_API_TOKEN')}")
+    print(f"  DRT 백엔드 · carecall_drt — {_key_state(BRIDGE_DIR / '.env', 'DRT_RELAY_TOKEN')}")
 
     # 서로 맞아야 하는 값들이 어긋나 있으면 알려 준다.
     problems = []
@@ -160,6 +160,11 @@ def check_only() -> None:
     bridge_token = get_env_value(BRIDGE_DIR / ".env", "RELAY_API_TOKEN")
     if service_token != bridge_token:
         problems.append("릴레이 토큰이 drt_service와 브릿지에서 서로 다릅니다 (401이 납니다)")
+    carecall_token = get_env_value(BRIDGE_DIR / ".env", "DRT_RELAY_TOKEN")
+    if service_token != carecall_token:
+        problems.append("릴레이 토큰이 drt_service와 carecall_drt(DRT_RELAY_TOKEN)에서 서로 다릅니다 (401이 납니다)")
+    if get_env_value(BRIDGE_DIR / ".env", "DRT_BACKEND_ENABLED").lower() != "true":
+        problems.append("carecall_drt의 DRT_BACKEND_ENABLED가 true가 아니어서 DRT 계획/예약을 호출하지 않습니다")
     service_tmap = get_env_value(SERVICE_DIR / ".env", "TMAP_APP_KEY")
     dispatch_tmap = get_env_value(DISPATCH_DIR / ".env", "TMAP_APP_KEY")
     if service_tmap and not dispatch_tmap:
@@ -218,27 +223,30 @@ def main() -> None:
     else:
         info("데이터베이스 있음 (건너뜀)")
 
-    # ── 3. 브릿지 ───────────────────────────────────────────────────────
-    # 메인 서버(main_server/)는 브릿지를 직접 import하므로 같은 가상환경을 쓴다.
-    step("3/5 브릿지 · 메인 서버")
+    # ── 3. 브릿지 · 메인 서버 · carecall_drt ───────────────────────────────
+    # 메인 서버(main_server/)는 브릿지와 carecall_drt를 직접 import하므로 같은
+    # 가상환경을 쓴다. 케어콜 대화·DRT 의도 분석은 carecall_drt로 이식되어(
+    # docs/04_carecall_drt_이식.md) 더 이상 별도 가상환경이 필요 없다.
+    step("3/4 브릿지 · 메인 서버 · carecall_drt")
     python = ensure_venv(BRIDGE_DIR, "브릿지", args.force)
     pip_install(python, BRIDGE_DIR, ["-r", "requirements.txt"], "의존성 설치")
     pip_install(python, BRIDGE_DIR, ["-r", "requirements-analyzer.txt"],
                 "분석기 연동용 의존성 설치")
     ensure_env_file(BRIDGE_DIR)
 
-    # ── 4. 케어콜 분석기 ────────────────────────────────────────────────
-    step("4/5 케어콜 분석기 (care_call_bot)")
+    # ── 4. 케어콜(다솜이) — DRT와 무관한 파트만 남았다 ─────────────────────
+    # consent.py(통화 동의)·voice_io.py(음성 입력)만 있고, GEMINI_KEY는 이 폴더의
+    # .env에 그대로 두되(main_server/care_bridge.py가 이 경로에서 읽는다) 분석기
+    # 자체는 carecall_drt를 쓴다.
+    step("4/4 케어콜(다솜이) — 통화 동의·음성 입력")
     python = ensure_venv(CARE_CALL_DIR, "케어콜", args.force)
     pip_install(python, CARE_CALL_DIR, ["-r", "requirements.txt"],
-                "의도 분석·Gemini 데모용 의존성 설치")
-    # 분석기는 경로 없이 load_dotenv()를 부르기 때문에, 이 파일이 없으면 상위 폴더의
-    # .env를 대신 읽어 GEMINI_KEY를 넣을 곳이 없어진다. 빈 템플릿을 만들어 준다.
+                "음성 입력용 의존성 설치")
     if not (CARE_CALL_DIR / ".env").exists():
         (CARE_CALL_DIR / ".env").write_text(
-            "# 케어콜 대화·의도 분석 설정\n"
+            "# 다솜이 대화(Gemini) 설정\n"
             "# Gemini를 쓰려면 발급받은 키를 넣으세요.\n"
-            "# 비워 두면 분석기가 규칙 기반으로만 동작합니다(경고 후 계속 진행).\n"
+            "# 비워 두면 규칙 기반 대화로만 동작합니다(경고 후 계속 진행).\n"
             "GEMINI_KEY=\n",
             encoding="utf-8",
         )
@@ -254,6 +262,16 @@ def main() -> None:
     service_token = get_env_value(SERVICE_DIR / ".env", "RELAY_API_TOKEN")
     if service_token and set_env_default(BRIDGE_DIR / ".env", "RELAY_API_TOKEN", service_token):
         info("브릿지: 릴레이 토큰을 drt_service와 맞춤")
+
+    # carecall_drt(main_server/care_bridge.py가 쓴다)는 이름이 다르다
+    # (DRT_BACKEND_URL/DRT_RELAY_TOKEN/DRT_BACKEND_ENABLED) — 값은 같아야 한다.
+    if set_env_default(BRIDGE_DIR / ".env", "DRT_BACKEND_URL",
+                        get_env_value(BRIDGE_DIR / ".env", "DRT_BASE_URL") or "http://127.0.0.1:8001"):
+        info("carecall_drt: DRT_BACKEND_URL을 drt_service 주소와 맞춤")
+    if service_token and set_env_default(BRIDGE_DIR / ".env", "DRT_RELAY_TOKEN", service_token):
+        info("carecall_drt: DRT_RELAY_TOKEN을 drt_service와 맞춤")
+    if set_env_default(BRIDGE_DIR / ".env", "DRT_BACKEND_ENABLED", "true"):
+        info("carecall_drt: DRT_BACKEND_ENABLED=true (DRT 계획/예약 호출 활성화)")
 
     # TMAP 키를 두 군데 넣지 않아도 되게 한다. 배차 서버는 이 키로 차량 주행 경로를
     # 그린다(없으면 직선). 같은 키를 쓰므로 호출량도 그만큼 늘어난다.

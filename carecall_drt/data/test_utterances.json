@@ -1,0 +1,326 @@
+[
+  {
+    "id": "casual_home_rest",
+    "utterance": "어르신: 오늘은 그냥 집에서 쉴래.",
+    "expected_stage": "not_needed",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "casual_meal",
+    "utterance": "어르신: 오늘 밥은 먹었어.",
+    "expected_stage": "need_detection",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "casual_lunch",
+    "utterance": "어르신: 오늘 점심은 먹었어.",
+    "expected_stage": "need_detection",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "casual_weather",
+    "utterance": "어르신: 오늘 날씨가 좀 춥네.",
+    "expected_stage": "need_detection",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "casual_medicine",
+    "utterance": "어르신: 아까 점심 먹고 약도 먹었어.",
+    "expected_stage": "need_detection",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "casual_sleep",
+    "utterance": "어르신: 어제 잠을 잘 못 자서 오늘은 좀 피곤하네.",
+    "expected_stage": "need_detection",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "casual_family_call",
+    "utterance": "어르신: 아들이 아까 전화했어.",
+    "expected_stage": "need_detection",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "no_outing_home",
+    "utterance": "어르신: 오늘은 그냥 집에 있을래.",
+    "expected_stage": "not_needed",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "no_outing_tired",
+    "utterance": "어르신: 오늘은 피곤해서 아무 데도 안 나갈래.",
+    "expected_stage": "not_needed",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "cancel_hospital",
+    "utterance": "어르신: 병원은 안 가도 될 것 같아. 오늘은 집에 있을래.",
+    "expected_stage": "not_needed",
+    "expected_category": "medical_general"
+  },
+  {
+    "id": "refuse_family_ride",
+    "utterance": "어르신: 치과는 가야 하는데 딸이 데려다준대. 차는 안 불러도 돼.",
+    "expected_stage": "not_needed",
+    "expected_category": "medical_dental"
+  },
+  {
+    "id": "refuse_taxi",
+    "utterance": "어르신: 약국은 가야 하는데 택시 타고 갈게. 차량 예약은 안 해줘도 돼.",
+    "expected_stage": "not_needed",
+    "expected_category": "pharmacy"
+  },
+  {
+    "id": "emg_fall_severe",
+    "utterance": "어르신: 방금 넘어졌는데 못 일어나겠어. 움직일 수가 없어.",
+    "expected_stage": "emergency",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "emg_chest_sweat",
+    "utterance": "어르신: 가슴이 너무 답답하고 식은땀이 나.",
+    "expected_stage": "emergency",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "emg_speech",
+    "utterance": "어르신: 갑자기 말이 잘 안 나와.",
+    "expected_stage": "emergency",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "emg_breath_chest",
+    "utterance": "어르신: 숨이 잘 안 쉬어지고 가슴이 아파.",
+    "expected_stage": "emergency",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "emg_fall_light",
+    "utterance": "어르신: 화장실에서 넘어졌는데 일어나기가 너무 힘들어.",
+    "expected_stage": "emergency",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "emg_breath_short",
+    "utterance": "어르신: 숨이 너무 차고 가슴이 답답해.",
+    "expected_stage": "emergency",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "book_hospital",
+    "utterance": "어르신: 내일 오전 10시에 병원 가야 하는데 차 좀 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "medical_general"
+  },
+  {
+    "id": "book_pharmacy_exact",
+    "utterance": "어르신: 중앙약국까지 이동 차량 예약해줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "pharmacy"
+  },
+  {
+    "id": "book_pharmacy_time",
+    "utterance": "어르신: 오늘 오후 3시에 약국까지 차 좀 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "pharmacy"
+  },
+  {
+    "id": "book_dental_time",
+    "utterance": "어르신: 내일 오후 2시에 치과 가야 하는데 차 좀 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "medical_dental"
+  },
+  {
+    "id": "book_pharmacy_nearby",
+    "utterance": "어르신: 오늘 가까운 약국으로 이동 차량 예약해줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "pharmacy"
+  },
+  {
+    "id": "book_market_time",
+    "utterance": "어르신: 오후 3시에 시장에 장보러 가야 하는데 버스 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "shopping_market"
+  },
+  {
+    "id": "book_bank_exact",
+    "utterance": "어르신: 내일 오전 9시에 국민은행까지 차 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "public_bank"
+  },
+  {
+    "id": "book_market_nearby",
+    "utterance": "어르신: 가까운 시장으로 내일 오전에 이동 차량 예약해줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "shopping_market"
+  },
+  {
+    "id": "confirm_orthopedic",
+    "utterance": "어르신: 무릎이 아파서 가까운 정형외과로 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_orthopedics"
+  },
+  {
+    "id": "confirm_bank",
+    "utterance": "어르신: 은행에 통장 정리하러 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "public_bank"
+  },
+  {
+    "id": "confirm_market",
+    "utterance": "어르신: 내일 시장에 장보러 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "shopping_market"
+  },
+  {
+    "id": "confirm_bus_hard",
+    "utterance": "어르신: 버스 타기가 힘들어서 병원 가기 어려워.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_general"
+  },
+  {
+    "id": "confirm_mart",
+    "utterance": "어르신: 마트에 생필품 사러 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "shopping_mart"
+  },
+  {
+    "id": "confirm_library",
+    "utterance": "어르신: 도서관에 책 빌리러 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "leisure_library"
+  },
+  {
+    "id": "confirm_welfare",
+    "utterance": "어르신: 평소 다니는 복지관에 내일 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "welfare_center"
+  },
+  {
+    "id": "confirm_convenience",
+    "utterance": "어르신: 편의점에 잠깐 다녀오고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "shopping_convenience"
+  },
+  {
+    "id": "confirm_senior_center",
+    "utterance": "어르신: 경로당에 친구들 만나러 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "senior_center"
+  },
+  {
+    "id": "med_internal_nearby",
+    "utterance": "어르신: 배가 아파서 가까운 내과에 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_internal"
+  },
+  {
+    "id": "med_internal_real",
+    "utterance": "어르신: 배가 계속 아파서 내과에 가야겠어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_internal"
+  },
+  {
+    "id": "med_eye",
+    "utterance": "어르신: 눈이 침침해서 안과에 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_ophthalmology"
+  },
+  {
+    "id": "med_ent",
+    "utterance": "어르신: 귀가 잘 안 들려서 이비인후과에 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_ent"
+  },
+  {
+    "id": "med_skin",
+    "utterance": "어르신: 피부가 가려워서 피부과에 가고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_dermatology"
+  },
+  {
+    "id": "med_rehab",
+    "utterance": "어르신: 물리치료 받으러 재활의학과에 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "medical_rehabilitation"
+  },
+  {
+    "id": "place_community",
+    "utterance": "어르신: 주민센터에 등본 떼러 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "public_community_center"
+  },
+  {
+    "id": "place_city_office",
+    "utterance": "어르신: 구청에 민원 보러 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "public_city_office"
+  },
+  {
+    "id": "religion_church",
+    "utterance": "어르신: 일요일에 교회 예배 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "religious_church"
+  },
+  {
+    "id": "religion_church_week",
+    "utterance": "어르신: 수요일에 교회 예배 가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "religious_church"
+  },
+  {
+    "id": "religion_temple",
+    "utterance": "어르신: 이번 주말에 절에 다녀오고 싶어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "religious_temple"
+  },
+  {
+    "id": "religion_catholic",
+    "utterance": "어르신: 성당 미사에 가야 하는데 혼자 가기 어렵네.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "religious_catholic"
+  },
+  {
+    "id": "religion_worship_only",
+    "utterance": "어르신: 예배가 있어서 아침에 나가야 해.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "religious_church"
+  },
+  {
+    "id": "social_daughter",
+    "utterance": "어르신: 딸 집에 가야 하는데 혼자 가기가 힘들어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "social_family_visit"
+  },
+  {
+    "id": "social_friend",
+    "utterance": "어르신: 친구 만나러 가야 하는데 혼자 가기가 힘들어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "social_friend_visit"
+  },
+  {
+    "id": "social_son_book",
+    "utterance": "어르신: 아들 집에 가야 해서 이동 차량 예약해줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "social_family_visit"
+  },
+  {
+    "id": "social_grandson_book",
+    "utterance": "어르신: 손자 집에 가야 하는데 차 좀 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "social_family_visit"
+  },
+  {
+    "id": "unknown_outing",
+    "utterance": "어르신: 오늘 좀 나가고 싶긴 한데 어디 갈지는 아직 모르겠어.",
+    "expected_stage": "reservation_confirm",
+    "expected_category": "unknown"
+  },
+  {
+    "id": "unknown_book",
+    "utterance": "어르신: 내일 오후에 어디 좀 가야 하는데 차 좀 불러줘.",
+    "expected_stage": "reservation_info_collection",
+    "expected_category": "unknown"
+  }
+]

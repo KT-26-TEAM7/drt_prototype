@@ -12,27 +12,31 @@
 
 ## 0. 무엇이 무엇인가
 
-**네 덩어리가 이 폴더 안에 모두 들어 있습니다.** 다른 폴더를 찾아다닐 필요가 없습니다.
+**이 폴더 안에 모두 들어 있습니다.** 다른 폴더를 찾아다닐 필요가 없습니다.
 
 ```
 2026.08.04_DRT/
 ├─ main_server/       ⓪ 메인 서버 — 통화를 소유하고 전체를 지휘 → 포트 8002
-├─ bridge/            ① 브릿지 — 케어콜 결과를 DRT로 넘기는 접착제
-├─ care_call_bot/     ④ 케어콜 대화·의도 분석 (Gemini)
+├─ carecall_drt/      ① 케어콜 대화 분석 + 다중 턴 상태 + DRT 계획/예약 호출("두뇌")
+├─ bridge/            위치·음성규칙·문자·조회링크검증(재사용) + 독립 데모용 파이프라인
+├─ care_call_bot/     통화 동의(consent.py)·음성 입력(voice_io.py), GEMINI_KEY 보관
 ├─ drt_service/       ② 정류장·경로·목적지·예약          → 포트 8001
 ├─ mock_drt_server/   ③ 가상 DRT 서버 — 배차·차량추적·조회페이지 → 포트 8000
 ├─ scripts/           실행·점검 스크립트
-├─ samples/           케어콜 분석 결과 예시 7개
-└─ tests/             브릿지·상태 기계 테스트
+├─ samples/           케어콜 분석 결과 예시 7개 (bridge 단독 데모용)
+└─ tests/             브릿지(독립 파이프라인) 테스트 — carecall_drt는 carecall_drt/tests/
 ```
 
 | # | 폴더 | 역할 | 포트 | 언제 필요한가 |
 |---|---|---|---|---|
-| 0 | `main_server/` | **통화 세션·대화 상태 관리, 전체 지휘** | **8002** | 통화 흐름을 볼 때 |
-| 1 | `bridge/` | 게이트·검색어 변환·좌표·음성 문장·문자 | 없음 | 항상 |
+| 0 | `main_server/` | **통화 세션 관리, 전체 지휘**(`care_bridge.py` 어댑터) | **8002** | 통화 흐름을 볼 때 |
+| 1 | `carecall_drt/` | 다솜이 대화 + DRT 의도 분석·다중 턴 상태 + `/api/plan`·`/api/reservations` 호출 | 없음 | 항상 |
+| — | `bridge/` | 위치(GPS 없음 우회)·TTS 음성규칙·문자·추적링크검증(main_server가 재사용). `live_demo.py`/`run_handoff.py`용 독립 파이프라인으로도 그대로 남아 있음 | 없음 | 항상(재사용) / 단독 데모 시 |
 | 2 | `drt_service/` | 정류장·경로·목적지·예약 | **8001** | 실서버 연동 시 |
 | 3 | `mock_drt_server/` | 배차·차량 위치·조회 페이지 | **8000** | 배차까지 볼 때 |
-| 4 | `care_call_bot/` | 대화·의도 분석 | 없음 | 분석기까지 붙일 때 |
+| 4 | `care_call_bot/` | 통화 동의·음성 입력 (DRT와 무관) | 없음 | 동의/음성 데모 시 |
+
+무엇을 대체했고 왜 그런지는 [docs/04_carecall_drt_이식.md](docs/04_carecall_drt_이식.md)에 정리했습니다.
 
 **한 번에 다 필요하지는 않습니다.** 서버 없이 브릿지만으로도 전 분기를 시연할 수
 있습니다(§4-1).
@@ -42,17 +46,19 @@
 ```
 어르신 발화 (STT 결과)
    └─► ⓪ 메인 서버  POST /call/utterance
-          ├─ 대화 상태 관리 (상태 기계)
-          ├─► ④ 케어콜 분석기   → 최신 한 마디만 분석
-          └─► ① 브릿지          → 게이트·검색어·좌표 판단
-                 └─► ② drt_service   → 정류장·경로·목적지
-                        └─► ③ 배차 서버 → 차량 배정·실시간 추적·조회 링크
-                               └─► 문자(어르신·보호자)
+          └─► ① carecall_drt.CareCallDRTOrchestrator
+                 ├─ 대화 분석 + 다중 턴 상태(SessionState)
+                 ├─ 다솜이 응답(+DRT 의미 보강, Gemini 1회 호출)
+                 └─► /api/plan, /api/reservations
+                        └─► ② drt_service   → 정류장·경로·목적지
+                               └─► ③ 배차 서버 → 차량 배정·실시간 추적·조회 링크
+          └─► main_server/care_bridge.py 가 위치·음성규칙(sanitize)·문자·링크검증 적용
+                               └─► 문자(어르신만 — 보호자 알림은 현재 비활성화)
    ◄── 응답 문장 하나 (TTS로 읽어 줌)
 ```
 
-**한 턴에 한 마디만 말합니다.** DRT 쪽에서 할 말이 있으면 그것만, 없으면 다솜이가
-안부 대화를 잇습니다. 예전처럼 두 문단이 연달아 나가지 않습니다.
+**한 턴에 한 마디만 말합니다.** carecall_drt가 다솜이 공감과 DRT 안내를 한 문장으로
+합쳐 돌려주므로, 예전처럼 두 문단이 연달아 나가지 않습니다.
 
 > **포트 주의는 필요 없습니다.** 배차 서버의 `PORT` 하나가 조회 링크 주소까지
 > 결정하고, 런처가 그 값을 두 서버에 전달합니다. 어긋날 수 없습니다.
@@ -73,8 +79,9 @@ py scripts\setup.py
 |---|---|
 | 1 | 배차 서버 가상환경 + 의존성 + **DB 스키마 생성** |
 | 2 | drt_service 가상환경 + 의존성 + DB 초기화 + **`.env`에 배차 서버 주소 설정** |
-| 3 | 브릿지 가상환경 + 의존성 |
-| 4 | 케어콜 분석기 가상환경 + 의존성 |
+| 3 | 브릿지·메인 서버·carecall_drt 가상환경 + 의존성(하나로 통합 — main_server가 셋을 모두 import) |
+| 4 | 케어콜(다솜이 통화 동의·음성 입력) 가상환경 + 의존성 |
+| 5 | 설정 맞추기 — 릴레이 토큰·DRT 백엔드 주소를 drt_service와 동기화 |
 
 의존성을 내려받으므로 **몇 분 걸립니다**(drt_service의 CatBoost·LightGBM이 큼).
 이미 되어 있는 단계는 건너뛰므로 여러 번 실행해도 안전합니다.
@@ -185,7 +192,7 @@ drt_service의 .env에서 릴레이 토큰을 읽었습니다.
   [OK  ] 릴레이 토큰: 인증 통과
   [OK  ] 배차 연동 설정: drt_service -> 배차 서버 연결됨
   [OK  ] 조회 대시보드 서비스: http://127.0.0.1:8000/tracking/... 에서 대시보드 확인
-  [OK  ] 메인 서버 응답: 케어콜 DRT 메인 서버 (분석기=care_call_bot)
+  [OK  ] 메인 서버 응답: 케어콜 DRT 메인 서버 (응답기=GeminiJointResponder)
 ------------------------------------------------------------
   모두 정상입니다.
 
@@ -391,50 +398,44 @@ http://localhost:8000/tracking?token=<토큰>
 배차 서버 `.env`에 `TMAP_APP_KEY`를 넣으면 실제 도로 경로로, 없으면 직선으로 그려집니다
 (화면 하단에 `TMAP 도로 경로` / `직선 경로 (TMAP 폴백)` 로 표시됩니다).
 
-### 4-5. 케어콜 분석기까지 실제로 붙이기
+### 4-5. carecall_drt 분석기를 직접 시험해 보기
 
-발화 한 문장을 **분석기에 직접 넣어** 브릿지까지 흘려 보냅니다. 분석기 경로는
-이 폴더 안의 `care_call_bot`이 기본값이라 따로 지정할 필요가 없습니다.
-
-```powershell
-.\.venv\Scripts\python.exe scripts\live_demo.py "어르신: 가까운 치과에 가려는데 차 좀 불러줘." --offline
-```
-
-`care_call_bot\.env`에 `GEMINI_KEY`가 없으면 분석기가 규칙 기반으로만 동작합니다
-(경고를 출력하고 계속 진행합니다).
-
-**실제 통화처럼(동의 절차 + 음성 입출력) 보려면** 먼저 §2-1로 세 서버를 띄운 뒤
-케어콜 폴더에서 실행합니다. `call_demo.py`와 달리 시나리오가 정해져 있지 않고
-직접 말을 걸 수 있으며, 동의 절차를 거치고 응답을 실제 음성으로 들려줍니다.
+메인 서버 없이 carecall_drt 자체의 오프라인 데모/회귀 도구를 씁니다(둘 다
+`carecall_drt/` 자체 venv가 아니라 브릿지·메인 서버와 같은 루트 venv를 씁니다).
 
 ```powershell
-cd care_call_bot
-.\.venv\Scripts\python.exe gemini_chat_demo.py                    # 키보드 입력
-.\.venv\Scripts\python.exe gemini_chat_demo.py --voice             # 마이크 입력
-.\.venv\Scripts\python.exe gemini_chat_demo.py --voice --stt-model base   # 더 가벼운 STT 모델
+.\.venv\Scripts\python.exe rule_demo.py                       # API 키 없이 규칙 기반만
+.\.venv\Scripts\python.exe scripts\run_rule_regression.py     # 회귀 매트릭스 54개
+.\.venv\Scripts\python.exe scripts\demo_multiturn.py          # 다중 턴 슬롯 수집 시연
 ```
 
-대화 상태·DRT 판단은 이 스크립트가 아니라 메인 서버가 맡습니다. 이 스크립트는
-발화를 메인 서버의 `/call/utterance`로 넘기고 응답을 읽어 주기만 하는 입출력
-껍데기라, 세 서버가 떠 있지 않으면 바로 종료됩니다.
+**실제 통화 흐름(위치·문자·조회링크 포함)은 메인 서버를 통해서 봅니다** — §2-1로
+세 서버를 띄운 뒤 `call_demo.py`(§4-1-2)나 아래처럼 직접 HTTP로 대화를 걸면 됩니다.
 
-`--voice`는 faster-whisper(로컬 Whisper)로 마이크 음성을 텍스트로 바꿉니다. Mi:dm과
-달리 torch가 필요 없어 `requirements.txt`에 기본 포함되어 있습니다. **처음 실행할
-때만** Hugging Face Hub에서 STT 모델을 내려받으므로 인터넷이 필요하고, 그 뒤로는
-로컬 캐시(`~/.cache/huggingface`)로 오프라인 동작합니다. "(말씀하세요...)"가 뜨면
-말하면 되고, 말을 멈추고 1.5초가 지나면 자동으로 녹음이 끝나 인식 결과가 대화에
-들어갑니다. macOS는 처음 실행 시 마이크 접근 권한을 허용해야 합니다. 음성 출력(TTS)은
-macOS 내장 `say` 명령을 쓰므로 Windows에서는 텍스트로만 동작합니다(`--voice`로
-마이크 입력은 Windows에서도 됩니다).
+```powershell
+.\.venv\Scripts\python.exe scripts\call_demo.py --interactive
+```
+
+`care_call_bot\.env`에 `GEMINI_KEY`가 없으면 규칙 기반 응답(`RuleCareResponder`)으로만
+동작합니다(메인 서버 `/` 응답의 `responder` 값으로 확인할 수 있습니다).
+
+음성 입출력이 필요하면 `care_call_bot/voice_io.py`(faster-whisper 기반 STT, torch
+불필요)를 쓰는 별도 스크립트를 직접 작성해야 합니다 — 통합된 음성 데모는 아직 없습니다.
 
 ---
 
 ## 5. 테스트
 
-**브릿지** — 서버도 설치도 필요 없습니다(표준 라이브러리 `unittest`).
+**브릿지(독립 파이프라인)** — 서버도 설치도 필요 없습니다(표준 라이브러리 `unittest`).
 
 ```powershell
 py -m unittest discover -s tests -t .
+```
+
+**carecall_drt** — 루트 venv(브릿지·메인 서버와 공용)에 `pytest`가 필요합니다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest carecall_drt\tests -q
 ```
 
 **배차 서버** — `pytest`가 없으면 `.\.venv\Scripts\python.exe -m pip install pytest` 먼저.
@@ -449,7 +450,8 @@ cd mock_drt_server; .\.venv\Scripts\python.exe -m pytest -q
 cd drt_service; .\.venv\Scripts\python.exe -m pytest -q --basetemp=C:\Temp\pt
 ```
 
-현재 기준: 브릿지·상태 기계 **93개**, 배차 서버 **45개**, drt_service **100개** 모두 통과합니다.
+현재 기준: 브릿지 **76개**, carecall_drt **83개**(+회귀 매트릭스 54/54), 배차 서버
+**45개**, drt_service **100개** 모두 통과합니다.
 
 ---
 
@@ -503,11 +505,12 @@ Get-NetTCPConnection -LocalPort 8000,8001 -State Listen | ForEach-Object { Stop-
 | 항목 | 상태 |
 |---|---|
 | **문자 실제 발송** | 문구는 완성됐고 `data\sent_sms.jsonl` 에 기록됩니다. **발송 게이트웨이는 미연동** — `bridge/notify.py`의 `SmsSender`에 사업자 구현을 끼우면 됩니다 |
-| 예약 시각 | "내일 오전 10시"를 받아도 **지금 배차**됩니다. 두 서버 모두 예약 일시를 지원하지 않습니다 |
+| **보호자 알림** | carecall_drt 스키마에 동의 슬롯이 없어져 **항상 비활성화**(어르신 본인 문자만 발송). 필요해지면 `carecall_drt/analyzer.py`·`schemas.py`에 슬롯을 다시 추가해야 합니다 |
+| 예약 시각 | "내일 오전 10시"를 받아도 **지금 배차**됩니다. carecall_drt가 날짜·시간을 슬롯으로 수집은 하지만 drt_service로 전달하지 않습니다(두 서버 모두 예약 일시 미지원) |
 | 배차 서버 인증 | `POST /calls` 에 인증이 없습니다. 로컬 데모는 무방하나 배포 시 필요 |
-| 음성 입출력 | `gemini_chat_demo.py --voice`로 마이크 입력(faster-whisper)은 됩니다. 음성 출력(TTS)은 macOS `say` 기준이라 Windows에서는 텍스트로만 동작합니다 |
+| 음성 입출력 | 통합된 음성 데모는 아직 없습니다. `care_call_bot/voice_io.py`(faster-whisper, torch 불필요)를 직접 붙여야 합니다 |
 | 전화망 연결 | 전화망 진입점은 없습니다(`main_server/`는 통화를 소유·지휘하는 프로세스 자체는 이미 있고, 텍스트 발화를 대신 받습니다) |
-| 안내 문장의 LLM 사용 | "차를 불러 드릴까요?" 같은 DRT 안내 문장은 LLM이 아니라 `bridge/speech.py`의 규칙 기반 템플릿이 만듭니다. LLM은 발화 의도 분석과 다솜이 안부잡담에서만 실제로 호출됩니다 |
+| 안내 문장의 LLM 사용 | "차를 불러 드릴까요?" 같은 DRT 안내 문장은 LLM이 아니라 `carecall_drt/backend.py`(계획/예약 안내)와 `carecall_drt/responses.py`(다음 질문)의 규칙 기반 템플릿이 만듭니다. LLM은 발화 의미 분석과 다솜이 공감 응답 생성에서만 호출됩니다(Gemini 모드에서는 한 번의 호출로 둘 다 처리) |
 
 ---
 
@@ -636,8 +639,9 @@ Pages + Render 배포용)**로 옮겼습니다. `mock-drt-server-main (2)`에는
 
 | 문서 | 내용 |
 |---|---|
-| [README.md](README.md) | 브릿지가 무엇이고 왜 이렇게 만들었는지 |
-| [docs/integration_design.md](docs/integration_design.md) | 케어콜↔DRT 필드 매핑, 알려진 갭 7가지 |
+| [docs/04_carecall_drt_이식.md](docs/04_carecall_drt_이식.md) | carecall_drt 이식 — 무엇을 대체했고 왜, 이식하며 고친 버그 3가지 |
+| [README.md](README.md) | 브릿지가 무엇이고 왜 이렇게 만들었는지(독립 파이프라인 관점) |
+| [docs/integration_design.md](docs/integration_design.md) | 케어콜↔DRT 필드 매핑, 알려진 갭 7가지(예약 시각 등 일부는 여전히 유효) |
 | [docs/dispatch_integration.md](docs/dispatch_integration.md) | 배차 서버 연동 상세, 각 프로젝트 변경 내역 |
 | [docs/cloud_deployment.md](docs/cloud_deployment.md) | Render 클라우드 배포, ClawOps 실시간 전화 연동(MCP) |
 | `drt_service/RUNBOOK.md` | drt_service 단독 운영 |
