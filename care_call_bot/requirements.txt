@@ -2,8 +2,11 @@
 google-genai
 python-dotenv
 
-# 음성 입력 (gemini_chat_demo.py --voice). Mi:dm과 달리 torch가 필요 없다
+# 음성 입력 (gemini_chat_demo.py --voice, voice_io.py 공용). torch가 필요 없다
 # (CTranslate2 기반 로컬 Whisper, 오프라인·무료).
 faster-whisper
 sounddevice
 numpy
+
+# OpenAI Realtime API 데모 (openai_chat_demo.py)
+websockets>=13.0

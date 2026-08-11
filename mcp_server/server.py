@@ -52,14 +52,22 @@ def _headers() -> dict:
     return headers
 
 
+DEFAULT_USER_ID = os.environ.get("DEFAULT_USER_ID", "elder_demo_01")
+
+
 @mcp.tool
-def start_call(user_id: str) -> dict:
+def start_call(user_id: str = DEFAULT_USER_ID) -> dict:
     """통화를 시작하고 세션을 만든다. 통화당 딱 한 번, 맨 처음에만 호출한다.
+
+    user_id는 어르신께 절대 되묻지 않는다 — 지정하지 않으면 데모용 기본 프로필을
+    쓴다. (2026-08-11 실제 통화에서 에이전트가 user_id를 몰라 통화 시작을 어르신께
+    되묻느라 인사조차 못 하는 문제가 있었다 — 기본값으로 이 상황 자체를 없앤다.)
 
     반환된 session_id를 통화가 끝날 때까지 기억해서, 이후 이 통화 동안의 모든
     send_utterance / end_call 호출에 그대로 넘겨야 한다(매번 새로 만들지 않는다).
     반환된 reply는 인사말이다. 한 글자도 바꾸지 말고 그대로 소리 내어 말한다.
     """
+    user_id = user_id or DEFAULT_USER_ID
     try:
         response = httpx.post(
             f"{MAIN_SERVER_BASE_URL}/call/start",

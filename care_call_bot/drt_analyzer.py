@@ -31,7 +31,14 @@ load_dotenv()
 USE_GEMINI = True  # 한도 아끼려면 False, Gemini 최종 확인 때만 True
 SHOW_RAW_GEMINI = False
 MODEL_NAME = "gemini-3.6-flash"
-GEMINI_TEMP_DISABLED = False #한 번 Gemini quota 초과가 발생하면, 같은 실행 안에서는 Gemini를 더 이상 부르지 않게 함
+# quota 초과(429) 시 잠시 쉬었다가 다시 시도한다. 예전에는 한 번 초과되면 이 값이
+# 영원히 True로 고정돼서, main_server처럼 며칠씩 떠서 여러 통화를 처리하는 서버에서는
+# 그 이후 모든 통화가 규칙 기반 분석으로만 처리됐다(2026-08-11, 실제 ClawOps 통화에서
+# 발견 — "차 좀 불러줘"를 반복해도 규칙 기반이 reservation_consent를 못 잡아 루프에 빠짐).
+# chat_demo.py 같은 "한 번 실행하고 끝나는" 스크립트를 염두에 둔 설계라 장수명 서버에는
+# 안 맞았다. 쿨다운을 두면 한 번의 rate limit이 서버 수명 내내 남지 않는다.
+GEMINI_COOLDOWN_SEC = 60.0
+_gemini_disabled_until = 0.0
 
 # Free tier 요청 제한 방지용. 빠르게 테스트하려면 0으로 바꿔도 됨.
 REQUEST_DELAY_SEC = 25.0
@@ -475,9 +482,9 @@ guardian_notify_consent, extracted_keywords, reason
 """
 
 def call_gemini(conversation: str) -> Optional[Dict[str, Any]]:
-    global GEMINI_TEMP_DISABLED
+    global _gemini_disabled_until
 
-    if not USE_GEMINI or GEMINI_TEMP_DISABLED:
+    if not USE_GEMINI or time.time() < _gemini_disabled_until:
         return None
 
     api_key = os.getenv("GEMINI_KEY")
@@ -503,8 +510,9 @@ def call_gemini(conversation: str) -> Optional[Dict[str, Any]]:
         err = str(e)
 
         if "429" in err or "RESOURCE_EXHAUSTED" in err or "Quota exceeded" in err:
-            GEMINI_TEMP_DISABLED = True
-            print("주의: Gemini 무료 요청 한도를 초과하여 이번 실행에서는 규칙 기반 분석으로 진행합니다.")
+            _gemini_disabled_until = time.time() + GEMINI_COOLDOWN_SEC
+            print(f"주의: Gemini 무료 요청 한도를 초과하여 {GEMINI_COOLDOWN_SEC:.0f}초간 "
+                  "규칙 기반 분석으로 진행합니다.")
         else:
             print(f"주의: Gemini 호출 실패. 규칙 기반 분석으로 진행합니다. ({type(e).__name__})")
 
