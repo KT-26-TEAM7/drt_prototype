@@ -116,6 +116,12 @@ services:
       # 전화 연동에 쓰는 것과 같은, ClawOps 계정에 사전 등록된 발신 번호.
       - key: CLAWOPS_FROM_NUMBER
         sync: false
+      # 2026-08-12 신규 — ClawOps 통화 상태 웹훅(POST /webhooks/clawops/call-status)
+      # 서명 검증용. ClawOps 대시보드 "API & Webhooks"의 Webhook Signing Secret과
+      # 같은 값. 비어 있으면 서명 검증 없이 동작한다(로컬 개발 편의 — 운영에서는
+      # 반드시 채울 것). docs/cloud_deployment.md §7 참고.
+      - key: CLAWOPS_WEBHOOK_SIGNING_SECRET
+        sync: false
 
   # ── [신규] MCP 도구 서버 ─────────────────────────────────────────────────
   - type: web

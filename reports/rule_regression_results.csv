@@ -1,55 +1,55 @@
 ﻿id,utterance,expected_stage,actual_stage,expected_category,actual_category,target_slot,should_call_gemini,rule_latency_ms,passed
-casual_home_rest,어르신: 오늘은 그냥 집에서 쉴래.,not_needed,not_needed,unknown,unknown,,False,3.05,True
-casual_meal,어르신: 오늘 밥은 먹었어.,need_detection,need_detection,unknown,unknown,,False,1.622,True
-casual_lunch,어르신: 오늘 점심은 먹었어.,need_detection,need_detection,unknown,unknown,,False,1.949,True
-casual_weather,어르신: 오늘 날씨가 좀 춥네.,need_detection,need_detection,unknown,unknown,,False,0.971,True
-casual_medicine,어르신: 아까 점심 먹고 약도 먹었어.,need_detection,need_detection,unknown,unknown,,False,0.694,True
-casual_sleep,어르신: 어제 잠을 잘 못 자서 오늘은 좀 피곤하네.,need_detection,need_detection,unknown,unknown,,False,0.445,True
-casual_family_call,어르신: 아들이 아까 전화했어.,need_detection,need_detection,unknown,unknown,,False,0.419,True
-no_outing_home,어르신: 오늘은 그냥 집에 있을래.,not_needed,not_needed,unknown,unknown,,False,0.427,True
-no_outing_tired,어르신: 오늘은 피곤해서 아무 데도 안 나갈래.,not_needed,not_needed,unknown,unknown,,False,0.478,True
-cancel_hospital,어르신: 병원은 안 가도 될 것 같아. 오늘은 집에 있을래.,not_needed,not_needed,medical_general,medical_general,,False,0.53,True
-refuse_family_ride,어르신: 치과는 가야 하는데 딸이 데려다준대. 차는 안 불러도 돼.,not_needed,not_needed,medical_dental,medical_dental,,False,0.342,True
-refuse_taxi,어르신: 약국은 가야 하는데 택시 타고 갈게. 차량 예약은 안 해줘도 돼.,not_needed,not_needed,pharmacy,pharmacy,,False,0.505,True
-emg_fall_severe,어르신: 방금 넘어졌는데 못 일어나겠어. 움직일 수가 없어.,emergency,emergency,unknown,unknown,,False,1.787,True
-emg_chest_sweat,어르신: 가슴이 너무 답답하고 식은땀이 나.,emergency,emergency,unknown,unknown,,False,1.142,True
-emg_speech,어르신: 갑자기 말이 잘 안 나와.,emergency,emergency,unknown,unknown,,False,0.901,True
-emg_breath_chest,어르신: 숨이 잘 안 쉬어지고 가슴이 아파.,emergency,emergency,unknown,unknown,,False,0.748,True
-emg_fall_light,어르신: 화장실에서 넘어졌는데 일어나기가 너무 힘들어.,emergency,emergency,unknown,unknown,,False,0.897,True
-emg_breath_short,어르신: 숨이 너무 차고 가슴이 답답해.,emergency,emergency,unknown,unknown,,False,0.847,True
-book_hospital,어르신: 내일 오전 10시에 병원 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,medical_general,medical_general,medical_department,False,0.747,True
-book_pharmacy_exact,어르신: 중앙약국까지 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,pharmacy,pharmacy,date,False,0.523,True
-book_pharmacy_time,어르신: 오늘 오후 3시에 약국까지 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,pharmacy,pharmacy,place_resolution_method,False,0.635,True
-book_dental_time,어르신: 내일 오후 2시에 치과 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,medical_dental,medical_dental,place_resolution_method,False,0.457,True
-book_pharmacy_nearby,어르신: 오늘 가까운 약국으로 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,pharmacy,pharmacy,time,False,0.64,True
-book_market_time,어르신: 오후 3시에 시장에 장보러 가야 하는데 버스 불러줘.,reservation_info_collection,reservation_info_collection,shopping_market,shopping_market,place_resolution_method,False,1.147,True
-book_bank_exact,어르신: 내일 오전 9시에 국민은행까지 차 불러줘.,reservation_info_collection,reservation_info_collection,public_bank,public_bank,pickup_location,False,0.927,True
-book_market_nearby,어르신: 가까운 시장으로 내일 오전에 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,shopping_market,shopping_market,pickup_location,False,0.794,True
-confirm_orthopedic,어르신: 무릎이 아파서 가까운 정형외과로 가고 싶어.,reservation_confirm,reservation_confirm,medical_orthopedics,medical_orthopedics,reservation_consent,False,0.728,True
-confirm_bank,어르신: 은행에 통장 정리하러 가야 해.,reservation_confirm,reservation_confirm,public_bank,public_bank,reservation_consent,False,0.819,True
-confirm_market,어르신: 내일 시장에 장보러 가고 싶어.,reservation_confirm,reservation_confirm,shopping_market,shopping_market,reservation_consent,False,0.713,True
-confirm_bus_hard,어르신: 버스 타기가 힘들어서 병원 가기 어려워.,reservation_confirm,reservation_confirm,medical_general,medical_general,reservation_consent,False,0.96,True
-confirm_mart,어르신: 마트에 생필품 사러 가야 해.,reservation_confirm,reservation_confirm,shopping_mart,shopping_mart,reservation_consent,False,0.949,True
-confirm_library,어르신: 도서관에 책 빌리러 가고 싶어.,reservation_confirm,reservation_confirm,leisure_library,leisure_library,reservation_consent,False,0.681,True
-confirm_welfare,어르신: 평소 다니는 복지관에 내일 가고 싶어.,reservation_confirm,reservation_confirm,welfare_center,welfare_center,reservation_consent,False,0.405,True
-confirm_convenience,어르신: 편의점에 잠깐 다녀오고 싶어.,reservation_confirm,reservation_confirm,shopping_convenience,shopping_convenience,reservation_consent,False,0.313,True
-confirm_senior_center,어르신: 경로당에 친구들 만나러 가야 해.,reservation_confirm,reservation_confirm,senior_center,senior_center,reservation_consent,False,0.318,True
-med_internal_nearby,어르신: 배가 아파서 가까운 내과에 가고 싶어.,reservation_confirm,reservation_confirm,medical_internal,medical_internal,reservation_consent,False,0.262,True
-med_internal_real,어르신: 배가 계속 아파서 내과에 가야겠어.,reservation_confirm,reservation_confirm,medical_internal,medical_internal,reservation_consent,False,0.435,True
-med_eye,어르신: 눈이 침침해서 안과에 가고 싶어.,reservation_confirm,reservation_confirm,medical_ophthalmology,medical_ophthalmology,reservation_consent,False,0.271,True
-med_ent,어르신: 귀가 잘 안 들려서 이비인후과에 가야 해.,reservation_confirm,reservation_confirm,medical_ent,medical_ent,reservation_consent,False,0.241,True
-med_skin,어르신: 피부가 가려워서 피부과에 가고 싶어.,reservation_confirm,reservation_confirm,medical_dermatology,medical_dermatology,reservation_consent,False,0.216,True
-med_rehab,어르신: 물리치료 받으러 재활의학과에 가야 해.,reservation_confirm,reservation_confirm,medical_rehabilitation,medical_rehabilitation,reservation_consent,False,0.351,True
-place_community,어르신: 주민센터에 등본 떼러 가야 해.,reservation_confirm,reservation_confirm,public_community_center,public_community_center,reservation_consent,False,0.205,True
-place_city_office,어르신: 구청에 민원 보러 가야 해.,reservation_confirm,reservation_confirm,public_city_office,public_city_office,reservation_consent,False,0.394,True
-religion_church,어르신: 일요일에 교회 예배 가야 해.,reservation_confirm,reservation_confirm,religious_church,religious_church,reservation_consent,False,0.435,True
-religion_church_week,어르신: 수요일에 교회 예배 가야 해.,reservation_confirm,reservation_confirm,religious_church,religious_church,reservation_consent,False,0.461,True
-religion_temple,어르신: 이번 주말에 절에 다녀오고 싶어.,reservation_confirm,reservation_confirm,religious_temple,religious_temple,reservation_consent,False,0.508,True
-religion_catholic,어르신: 성당 미사에 가야 하는데 혼자 가기 어렵네.,reservation_confirm,reservation_confirm,religious_catholic,religious_catholic,reservation_consent,False,0.372,True
-religion_worship_only,어르신: 예배가 있어서 아침에 나가야 해.,reservation_confirm,reservation_confirm,religious_church,religious_church,reservation_consent,False,0.34,True
-social_daughter,어르신: 딸 집에 가야 하는데 혼자 가기가 힘들어.,reservation_confirm,reservation_confirm,social_family_visit,social_family_visit,reservation_consent,False,0.391,True
-social_friend,어르신: 친구 만나러 가야 하는데 혼자 가기가 힘들어.,reservation_confirm,reservation_confirm,social_friend_visit,social_friend_visit,reservation_consent,False,0.341,True
-social_son_book,어르신: 아들 집에 가야 해서 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,social_family_visit,social_family_visit,exact_destination,False,0.322,True
-social_grandson_book,어르신: 손자 집에 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,social_family_visit,social_family_visit,exact_destination,False,0.316,True
-unknown_outing,어르신: 오늘 좀 나가고 싶긴 한데 어디 갈지는 아직 모르겠어.,reservation_confirm,reservation_confirm,unknown,unknown,destination_category,False,0.351,True
-unknown_book,어르신: 내일 오후에 어디 좀 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,unknown,unknown,destination_category,False,0.383,True
+casual_home_rest,어르신: 오늘은 그냥 집에서 쉴래.,not_needed,not_needed,unknown,unknown,,False,1.539,True
+casual_meal,어르신: 오늘 밥은 먹었어.,need_detection,need_detection,unknown,unknown,,False,0.408,True
+casual_lunch,어르신: 오늘 점심은 먹었어.,need_detection,need_detection,unknown,unknown,,False,0.375,True
+casual_weather,어르신: 오늘 날씨가 좀 춥네.,need_detection,need_detection,unknown,unknown,,False,0.315,True
+casual_medicine,어르신: 아까 점심 먹고 약도 먹었어.,need_detection,need_detection,unknown,unknown,,False,0.326,True
+casual_sleep,어르신: 어제 잠을 잘 못 자서 오늘은 좀 피곤하네.,need_detection,need_detection,unknown,unknown,,False,0.324,True
+casual_family_call,어르신: 아들이 아까 전화했어.,need_detection,need_detection,unknown,unknown,,False,0.295,True
+no_outing_home,어르신: 오늘은 그냥 집에 있을래.,not_needed,not_needed,unknown,unknown,,False,0.272,True
+no_outing_tired,어르신: 오늘은 피곤해서 아무 데도 안 나갈래.,not_needed,not_needed,unknown,unknown,,False,0.286,True
+cancel_hospital,어르신: 병원은 안 가도 될 것 같아. 오늘은 집에 있을래.,not_needed,not_needed,medical_general,medical_general,,False,0.308,True
+refuse_family_ride,어르신: 치과는 가야 하는데 딸이 데려다준대. 차는 안 불러도 돼.,not_needed,not_needed,medical_dental,medical_dental,,False,0.182,True
+refuse_taxi,어르신: 약국은 가야 하는데 택시 타고 갈게. 차량 예약은 안 해줘도 돼.,not_needed,not_needed,pharmacy,pharmacy,,False,0.239,True
+emg_fall_severe,어르신: 방금 넘어졌는데 못 일어나겠어. 움직일 수가 없어.,emergency,emergency,unknown,unknown,,False,0.331,True
+emg_chest_sweat,어르신: 가슴이 너무 답답하고 식은땀이 나.,emergency,emergency,unknown,unknown,,False,0.304,True
+emg_speech,어르신: 갑자기 말이 잘 안 나와.,emergency,emergency,unknown,unknown,,False,1.125,True
+emg_breath_chest,어르신: 숨이 잘 안 쉬어지고 가슴이 아파.,emergency,emergency,unknown,unknown,,False,0.758,True
+emg_fall_light,어르신: 화장실에서 넘어졌는데 일어나기가 너무 힘들어.,emergency,emergency,unknown,unknown,,False,0.756,True
+emg_breath_short,어르신: 숨이 너무 차고 가슴이 답답해.,emergency,emergency,unknown,unknown,,False,0.709,True
+book_hospital,어르신: 내일 오전 10시에 병원 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,medical_general,medical_general,medical_department,False,0.603,True
+book_pharmacy_exact,어르신: 중앙약국까지 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,pharmacy,pharmacy,date,False,0.377,True
+book_pharmacy_time,어르신: 오늘 오후 3시에 약국까지 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,pharmacy,pharmacy,place_resolution_method,False,0.435,True
+book_dental_time,어르신: 내일 오후 2시에 치과 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,medical_dental,medical_dental,place_resolution_method,False,0.629,True
+book_pharmacy_nearby,어르신: 오늘 가까운 약국으로 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,pharmacy,pharmacy,time,False,0.595,True
+book_market_time,어르신: 오후 3시에 시장에 장보러 가야 하는데 버스 불러줘.,reservation_info_collection,reservation_info_collection,shopping_market,shopping_market,place_resolution_method,False,0.468,True
+book_bank_exact,어르신: 내일 오전 9시에 국민은행까지 차 불러줘.,reservation_info_collection,reservation_info_collection,public_bank,public_bank,pickup_location,False,0.323,True
+book_market_nearby,어르신: 가까운 시장으로 내일 오전에 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,shopping_market,shopping_market,pickup_location,False,0.469,True
+confirm_orthopedic,어르신: 무릎이 아파서 가까운 정형외과로 가고 싶어.,reservation_confirm,reservation_confirm,medical_orthopedics,medical_orthopedics,reservation_consent,False,0.453,True
+confirm_bank,어르신: 은행에 통장 정리하러 가야 해.,reservation_confirm,reservation_confirm,public_bank,public_bank,reservation_consent,False,1.041,True
+confirm_market,어르신: 내일 시장에 장보러 가고 싶어.,reservation_confirm,reservation_confirm,shopping_market,shopping_market,reservation_consent,False,0.473,True
+confirm_bus_hard,어르신: 버스 타기가 힘들어서 병원 가기 어려워.,reservation_confirm,reservation_confirm,medical_general,medical_general,reservation_consent,False,0.615,True
+confirm_mart,어르신: 마트에 생필품 사러 가야 해.,reservation_confirm,reservation_confirm,shopping_mart,shopping_mart,reservation_consent,False,0.489,True
+confirm_library,어르신: 도서관에 책 빌리러 가고 싶어.,reservation_confirm,reservation_confirm,leisure_library,leisure_library,reservation_consent,False,0.42,True
+confirm_welfare,어르신: 평소 다니는 복지관에 내일 가고 싶어.,reservation_confirm,reservation_confirm,welfare_center,welfare_center,reservation_consent,False,0.278,True
+confirm_convenience,어르신: 편의점에 잠깐 다녀오고 싶어.,reservation_confirm,reservation_confirm,shopping_convenience,shopping_convenience,reservation_consent,False,0.262,True
+confirm_senior_center,어르신: 경로당에 친구들 만나러 가야 해.,reservation_confirm,reservation_confirm,senior_center,senior_center,reservation_consent,False,0.261,True
+med_internal_nearby,어르신: 배가 아파서 가까운 내과에 가고 싶어.,reservation_confirm,reservation_confirm,medical_internal,medical_internal,reservation_consent,False,0.15,True
+med_internal_real,어르신: 배가 계속 아파서 내과에 가야겠어.,reservation_confirm,reservation_confirm,medical_internal,medical_internal,reservation_consent,False,0.153,True
+med_eye,어르신: 눈이 침침해서 안과에 가고 싶어.,reservation_confirm,reservation_confirm,medical_ophthalmology,medical_ophthalmology,reservation_consent,False,0.158,True
+med_ent,어르신: 귀가 잘 안 들려서 이비인후과에 가야 해.,reservation_confirm,reservation_confirm,medical_ent,medical_ent,reservation_consent,False,0.173,True
+med_skin,어르신: 피부가 가려워서 피부과에 가고 싶어.,reservation_confirm,reservation_confirm,medical_dermatology,medical_dermatology,reservation_consent,False,0.146,True
+med_rehab,어르신: 물리치료 받으러 재활의학과에 가야 해.,reservation_confirm,reservation_confirm,medical_rehabilitation,medical_rehabilitation,reservation_consent,False,0.166,True
+place_community,어르신: 주민센터에 등본 떼러 가야 해.,reservation_confirm,reservation_confirm,public_community_center,public_community_center,reservation_consent,False,0.19,True
+place_city_office,어르신: 구청에 민원 보러 가야 해.,reservation_confirm,reservation_confirm,public_city_office,public_city_office,reservation_consent,False,0.179,True
+religion_church,어르신: 일요일에 교회 예배 가야 해.,reservation_confirm,reservation_confirm,religious_church,religious_church,reservation_consent,False,0.2,True
+religion_church_week,어르신: 수요일에 교회 예배 가야 해.,reservation_confirm,reservation_confirm,religious_church,religious_church,reservation_consent,False,0.195,True
+religion_temple,어르신: 이번 주말에 절에 다녀오고 싶어.,reservation_confirm,reservation_confirm,religious_temple,religious_temple,reservation_consent,False,0.229,True
+religion_catholic,어르신: 성당 미사에 가야 하는데 혼자 가기 어렵네.,reservation_confirm,reservation_confirm,religious_catholic,religious_catholic,reservation_consent,False,0.212,True
+religion_worship_only,어르신: 예배가 있어서 아침에 나가야 해.,reservation_confirm,reservation_confirm,religious_church,religious_church,reservation_consent,False,0.197,True
+social_daughter,어르신: 딸 집에 가야 하는데 혼자 가기가 힘들어.,reservation_confirm,reservation_confirm,social_family_visit,social_family_visit,reservation_consent,False,0.213,True
+social_friend,어르신: 친구 만나러 가야 하는데 혼자 가기가 힘들어.,reservation_confirm,reservation_confirm,social_friend_visit,social_friend_visit,reservation_consent,False,0.227,True
+social_son_book,어르신: 아들 집에 가야 해서 이동 차량 예약해줘.,reservation_info_collection,reservation_info_collection,social_family_visit,social_family_visit,exact_destination,False,0.204,True
+social_grandson_book,어르신: 손자 집에 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,social_family_visit,social_family_visit,exact_destination,False,0.202,True
+unknown_outing,어르신: 오늘 좀 나가고 싶긴 한데 어디 갈지는 아직 모르겠어.,reservation_confirm,reservation_confirm,unknown,unknown,destination_category,False,0.233,True
+unknown_book,어르신: 내일 오후에 어디 좀 가야 하는데 차 좀 불러줘.,reservation_info_collection,reservation_info_collection,unknown,unknown,destination_category,False,0.211,True

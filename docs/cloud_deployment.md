@@ -189,6 +189,7 @@ repo root의 `render.yaml`이 4개 서비스를 한 번에 정의한다. Render 
 | `main-server` | `CLAWOPS_API_KEY` | ClawOps 대시보드 "API & Webhooks"에서 발급한 키(`sk_...`) — 통화 연동에 쓰는 것과 같은 계정 |
 | `main-server` | `CLAWOPS_ACCOUNT_ID` | 같은 페이지의 Account ID(`AC...`) |
 | `main-server` | `CLAWOPS_FROM_NUMBER` | 그 계정에 사전 등록된 발신 번호(통화에 쓰는 070 번호) — 없으면 문자는 기록만 되고 실제 발송은 안 됨 |
+| `main-server` | `CLAWOPS_WEBHOOK_SIGNING_SECRET` | "API & Webhooks"의 Webhook Signing Secret — 통화 상태 웹훅 서명 검증용(§6 "실제 통화 번호로 문자 발송" 참고). 비우면 서명 검증 없이 동작(로컬 개발용, 운영에서는 채울 것) |
 | `mcp-server` | `MAIN_SERVER_TOKEN` | `main-server`와 동일한 값 |
 
 나머지(서비스 간 URL 등)는 `render.yaml`에 이미 고정값으로 들어 있다 — 서비스
@@ -296,6 +297,9 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
    돌려받은 session_id를 통화가 끝날 때까지 기억해 둔다(매번 다시 만들지 않는다).
    돌려받은 reply를 인사말로 그대로, 한 글자도 바꾸지 말고 소리 내어 말한다.
    너 스스로 "안녕하세요" 같은 인사를 먼저 지어내면 안 된다.
+   이 통화에 대해 시스템이 이미 알려준 통화 ID가 있다면 clawops_call_id
+   파라미터에 그대로 넣는다. 어르신 음성에서 전화번호나 통화 ID를 알아내려
+   시도하지 않는다 — 모르면 그냥 비워 둔다.
 
 2. 그 뒤로는 어르신이 한 마디 말할 때마다 예외 없이 send_utterance를 호출한다.
    "이건 도구 없이도 답할 수 있겠다"는 판단이 들어도 절대 스스로 답하지 않는다 —
@@ -325,6 +329,49 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
 발화마다 도구를 부르는지, 아니면 "의도가 감지될 때만" 부르는지, 또는 순전히 모델의
 지시 순응도 문제인지 — 아직 명확하지 않다. 실제 통화로 v2 프롬프트를 반드시
 재검증한다.
+
+### 실제 통화 번호로 문자 발송 (2026-08-12 신규)
+
+기존에는 문자를 항상 `data/user_profiles.json`의 데모용 고정 번호(`elder_demo_01` →
+`010-0000-0001`)로 보내려 했다 — `user_id`가 항상 고정값이라 실제로 통화 중인
+어르신 번호와 전혀 무관했다.
+
+**설계**: 어르신 발화를 음성으로 옮겨 전화번호를 추출하게 하면 전사 오류·환각으로
+엉뚱한 번호에 문자가 샐 위험이 있어 채택하지 않았다. 대신 서버 대 서버로만 번호를
+주고받는다.
+
+```
+ClawOps가 어르신께 전화를 걺(발신 통화 — call_id·번호를 이미 알고 있음)
+   ↓ POST /webhooks/clawops/call-status (call_id, to, status 포함)
+main-server: call_id -> 번호로 잠깐 저장(PendingCallRegistry, 최대 10분 대기)
+   ↓
+AI 에이전트가 start_call(user_id, clawops_call_id) 호출
+   (전화번호가 아니라 시스템이 이미 아는 통화 ID만 그대로 전달 — 음성 전사 대상 아님)
+main-server: clawops_call_id로 저장해 둔 번호를 찾아 그 통화 세션에 연결
+   ↓
+예약 확정 시: 세션에 연결된 실제 번호로 문자 발송(없으면 프로필 고정 번호로 폴백)
+```
+
+- `main_server/clawops_webhook.py::PendingCallRegistry` — call_id↔번호 임시 저장(스레드 세이프, TTL 10분).
+- `POST /webhooks/clawops/call-status` — `bridge/config.py`의 `CLAWOPS_WEBHOOK_SIGNING_SECRET`으로
+  서명 검증(`clawops.webhooks.Webhooks().verify()`, HMAC-SHA256). 비어 있으면 검증 건너뜀.
+- `main_server/care_bridge.py`의 `CallSession.elder_phone`에 저장되고, `_notify()`가
+  프로필의 고정 번호보다 우선해서 쓴다.
+
+**아직 확인 못 한 것(2026-08-12 시점)**:
+1. **웹훅 실제 필드명** — 공식 문서를 못 읽어서(JS 렌더링 사이트) 확신할 수 없다.
+   `clawops` SDK가 Twilio류 서명 방식을 쓰는 걸로 봐서 폼 인코딩 PascalCase
+   (`CallSid`/`To`/`CallStatus`)일 가능성이 높다고 보고 `extract_call_id_and_phone()`
+   (`main_server/clawops_webhook.py`)이 그 후보와 snake_case 후보를 모두 시도하게
+   만들어 뒀다. **실제 웹훅이 처음 도착하면 Render 로그(`[ClawOps webhook] ...
+   raw_keys=[...]`)에서 진짜 필드명을 확인해 필요하면 후보 목록을 정리해야 한다.**
+2. **`status_callback` 등록 위치** — ClawOps SDK의 `Calls.create()`는
+   `status_callback`/`status_callback_event` 파라미터를 받지만, 지금 통화는 ClawOps
+   대시보드의 "배치 발신" 기능으로 걸고 있어서 그 캠페인 설정에 콜백 URL을 넣는
+   곳이 있는지, 아니면 "전화번호" 관리 화면에서 번호 단위로 설정하는지 확인이
+   필요하다. 콜백 URL은 `https://main-server-ecm1.onrender.com/webhooks/clawops/call-status`.
+3. `clawops_call_id`를 AI 에이전트가 실제로 채워서 보내는지 — 플랫폼이 통화 ID를
+   시스템 컨텍스트로 노출해 주는지에 달려 있다. 실제 통화로 검증 필요.
 
 ---
 

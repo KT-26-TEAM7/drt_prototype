@@ -56,12 +56,17 @@ DEFAULT_USER_ID = os.environ.get("DEFAULT_USER_ID", "elder_demo_01")
 
 
 @mcp.tool
-def start_call(user_id: str = DEFAULT_USER_ID) -> dict:
+def start_call(user_id: str = DEFAULT_USER_ID, clawops_call_id: str = "") -> dict:
     """통화를 시작하고 세션을 만든다. 통화당 딱 한 번, 맨 처음에만 호출한다.
 
     user_id는 어르신께 절대 되묻지 않는다 — 지정하지 않으면 데모용 기본 프로필을
     쓴다. (2026-08-11 실제 통화에서 에이전트가 user_id를 몰라 통화 시작을 어르신께
     되묻느라 인사조차 못 하는 문제가 있었다 — 기본값으로 이 상황 자체를 없앤다.)
+
+    clawops_call_id: 이 통화에 대해 시스템(플랫폼)이 이미 알고 있는 통화 ID가
+    있다면 그대로 넣는다. **어르신 음성에서 알아내거나 추측해서 넣으면 안 된다**
+    — 지어내느니 빈 문자열로 두는 편이 낫다. 이 값은 예약 확정 문자를 실제
+    통화 중인 번호로 보내는 데만 쓰인다(전화번호 자체를 여기 넣지 않는다).
 
     반환된 session_id를 통화가 끝날 때까지 기억해서, 이후 이 통화 동안의 모든
     send_utterance / end_call 호출에 그대로 넘겨야 한다(매번 새로 만들지 않는다).
@@ -71,7 +76,8 @@ def start_call(user_id: str = DEFAULT_USER_ID) -> dict:
     try:
         response = httpx.post(
             f"{MAIN_SERVER_BASE_URL}/call/start",
-            json={"user_id": user_id}, headers=_headers(), timeout=HTTP_TIMEOUT_S,
+            json={"user_id": user_id, "clawops_call_id": clawops_call_id},
+            headers=_headers(), timeout=HTTP_TIMEOUT_S,
         )
         response.raise_for_status()
         return response.json()

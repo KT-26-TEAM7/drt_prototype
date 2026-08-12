@@ -30,7 +30,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
@@ -38,7 +38,9 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
 
+from bridge.config import settings as bridge_settings  # noqa: E402
 from main_server.care_bridge import FAREWELL, CareCallBridge  # noqa: E402
+from main_server.clawops_webhook import extract_call_id_and_phone, parse_payload  # noqa: E402
 
 
 # ── 인증 ─────────────────────────────────────────────────────────────────
@@ -61,6 +63,11 @@ async def require_call_token(x_call_token: str | None = Security(_call_token_hea
 
 class StartCallRequest(BaseModel):
     user_id: str = Field(min_length=1, examples=["elder_demo_01"])
+    # ClawOps가 이 통화에 부여한 통화 ID(있으면). AI 에이전트가 시스템 컨텍스트에서
+    # 그대로 전달하는 값이라 음성 전사 대상이 아니다 — 실제 전화번호는 별도로
+    # /webhooks/clawops/call-status 웹훅이 이 ID와 짝지어 미리 전달한다
+    # (main_server/clawops_webhook.py 참고).
+    clawops_call_id: str = ""
 
 
 class StartCallResponse(BaseModel):
@@ -117,13 +124,54 @@ def create_app() -> FastAPI:
             "docs": "/docs",
         }
 
+    @application.post("/webhooks/clawops/call-status", tags=["webhooks"])
+    async def clawops_call_status(request: Request) -> dict:
+        """ClawOps가 통화 상태 변경 시 보내는 콜백(`Calls.create`의
+        `status_callback`). 실제 통화 상대 번호를 `call_id`와 함께 미리 받아
+        두었다가, `/call/start`가 `clawops_call_id`로 찾아 쓴다(§clawops_webhook.py).
+
+        **2026-08-12 시점 주의**: 정확한 필드명을 문서로 확인 못 해 여러 후보를
+        시도한다. 처음 실제 웹훅이 오면 아래 로그로 실제 키를 확인해야 한다.
+        """
+        care: CareCallBridge = application.state.care
+        raw_body = await request.body()
+        content_type = request.headers.get("content-type", "")
+        fields = parse_payload(content_type, raw_body)
+
+        secret = bridge_settings.clawops_webhook_signing_secret
+        if secret:
+            try:
+                import clawops
+
+                clawops.webhooks.Webhooks().verify(
+                    url=str(request.url),
+                    params=fields,
+                    signature=request.headers.get("x-signature", ""),
+                    signing_key=secret,
+                )
+            except Exception as exc:
+                print(f"[ClawOps webhook] 서명 검증 실패: {exc}", flush=True)
+                raise HTTPException(status.HTTP_401_UNAUTHORIZED, "서명 검증 실패")
+
+        call_id, phone, call_status = extract_call_id_and_phone(fields)
+        # 전화번호는 개인정보라 본문 전체는 안 남기고, 실제 필드명 확인용으로
+        # 키 목록만 남긴다(한동안만 — 필드명이 확정되면 이 줄은 지워도 된다).
+        print(
+            f"[ClawOps webhook] call_id={call_id!r} status={call_status!r} "
+            f"phone_found={bool(phone)} raw_keys={list(fields.keys())}",
+            flush=True,
+        )
+        if call_id and phone:
+            care.pending_calls.store(call_id, phone)
+        return {"ok": True}
+
     @application.post("/call/start", response_model=StartCallResponse, tags=["call"],
                       dependencies=[Depends(require_call_token)])
     def start_call(payload: StartCallRequest) -> StartCallResponse:
         session_id = f"CALL-{uuid.uuid4().hex[:10].upper()}"
         care: CareCallBridge = application.state.care
         # 첫인사는 고정 멘트다. 도입부가 매번 같아야 어르신이 혼란스럽지 않다.
-        greeting = care.start_call(session_id, payload.user_id)
+        greeting = care.start_call(session_id, payload.user_id, payload.clawops_call_id)
         return StartCallResponse(session_id=session_id, reply=greeting)
 
     @application.post("/call/utterance", response_model=UtteranceResponse, tags=["call"],

@@ -44,6 +44,8 @@ from bridge import notify, preflight, speech  # noqa: E402
 from bridge.config import settings as bridge_settings  # noqa: E402
 from bridge.location import LocationUnavailable, ProfileStore, resolve_origin  # noqa: E402
 
+from main_server.clawops_webhook import PendingCallRegistry  # noqa: E402
+
 CARE_CALL_DIR = PROJECT_DIR / "care_call_bot"
 FAREWELL = "오늘 이야기 나눠서 즐거웠어요. 또 전화드릴게요. 건강히 지내세요."
 
@@ -88,6 +90,9 @@ class CallSession:
     state: SessionState
     orchestrator: CareCallDRTOrchestrator
     turn_count: int = 0
+    # ClawOps 웹훅으로 확인한, 지금 통화 중인 실제 전화번호(있으면). 프로필의
+    # 데모용 고정 번호보다 우선해서 문자 발송에 쓴다 — main_server/clawops_webhook.py.
+    elder_phone: str | None = None
 
 
 @dataclass
@@ -117,6 +122,9 @@ class CareCallBridge:
         self.sms_sender = self._build_sms_sender()
         self.sms_sender_source = type(self.sms_sender).__name__
         self._sessions: dict[str, CallSession] = {}
+        # ClawOps 통화 상태 웹훅(POST /webhooks/clawops/call-status)이 채우고,
+        # start_call이 clawops_call_id로 한 번만 꺼내 쓴다.
+        self.pending_calls = PendingCallRegistry()
 
     def _build_responder(self):
         if self.settings.gemini_api_key:
@@ -147,15 +155,19 @@ class CareCallBridge:
 
     # ── 통화 시작/종료 ──────────────────────────────────────────────────
 
-    def start_call(self, session_id: str, user_id: str) -> str:
+    def start_call(self, session_id: str, user_id: str, clawops_call_id: str = "") -> str:
         orchestrator = CareCallDRTOrchestrator(
             analyzer=self.analyzer, responder=self.responder, backend=self._backend,
         )
+        # 웹훅이 이미 도착해 있으면(보통 통화 연결과 거의 동시) 여기서 한 번만
+        # 꺼내 쓴다 — claim()이 저장소에서 지우므로 이후 재사용되지 않는다.
+        elder_phone = self.pending_calls.claim(clawops_call_id) if clawops_call_id else None
         self._sessions[session_id] = CallSession(
             session_id=session_id,
             user_id=user_id,
             state=SessionState(session_id=session_id),
             orchestrator=orchestrator,
+            elder_phone=elder_phone,
         )
         return GREETING
 
@@ -258,11 +270,14 @@ class CareCallBridge:
             return "", []
 
         profile = self.profiles.get(session.user_id)
+        # ClawOps 웹훅으로 확인된 실제 통화 번호가 있으면 그걸 쓰고, 없으면
+        # 프로필의(데모용 고정) 번호로 폴백한다 — main_server/clawops_webhook.py.
+        elder_contact = session.elder_phone or (profile.contact if profile else "")
         messages = notify.build_messages(
             reservation,
             plan,
             elder_name=(profile.name if profile else ""),
-            elder_contact=(profile.contact if profile else ""),
+            elder_contact=elder_contact,
             # 사용자 결정(2026-08-11): carecall_drt 스키마에 보호자 알림 동의 슬롯이
             # 없으므로, 다시 추가되기 전까지 보호자 문자는 항상 보내지 않는다.
             guardian_contact="",

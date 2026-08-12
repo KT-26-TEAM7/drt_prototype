@@ -87,6 +87,12 @@ class Settings:
     clawops_from_number: str = field(
         default_factory=lambda: os.getenv("CLAWOPS_FROM_NUMBER", "").strip()
     )
+    # ClawOps 웹훅(통화 상태 변경 콜백) 서명 검증용. ClawOps 대시보드 "API &
+    # Webhooks"의 Webhook Signing Secret과 같은 값. 비어 있으면 서명 검증을
+    # 건너뛴다(로컬 개발 편의 — 운영에서는 반드시 채워야 한다).
+    clawops_webhook_signing_secret: str = field(
+        default_factory=lambda: os.getenv("CLAWOPS_WEBHOOK_SIGNING_SECRET", "").strip()
+    )
 
 
 settings = Settings()
