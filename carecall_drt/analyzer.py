@@ -952,9 +952,25 @@ class DRTAnalyzer:
 
         date = extract_date(text) or state.date
         time_ = extract_time(text) or state.time
-        pickup = extract_pickup(text) or state.pickup_location
+        # extract_pickup()은 "집 앞"류 고정 문구만 인식한다. 정류장·역 이름처럼
+        # 자유롭게 말씀하신 장소는 못 잡는데, exact_destination과 달리 문맥 인지
+        # 자유 응답 처리가 없어서 "출발하실 위치를 알려주실 수 있을까요?"에
+        # "사당역"이라고 답해도 계속 같은 질문을 반복하는 무한 루프가 생겼다
+        # (2026-08-12 실제 통화에서 재현·확인). exact_destination과 같은 방식으로
+        # 방금 그 슬롯을 물어본 경우에만 원문을 그대로 픽업 위치로 받는다.
+        pickup_from_turn = extract_pickup(text)
+        if (
+            pickup_from_turn is None
+            and state.last_target_slot == "pickup_location"
+            and not is_affirmative(text)
+            and not is_negative(text)
+        ):
+            candidate = _clean_exact_answer(text)
+            if candidate and len(normalize(candidate)) >= 2:
+                pickup_from_turn = candidate
+        pickup = pickup_from_turn or state.pickup_location
 
-        update_session(state, semantic, extract_date(text), extract_time(text), extract_pickup(text))
+        update_session(state, semantic, extract_date(text), extract_time(text), pickup_from_turn)
         # update_session 후 누적 상태를 다시 semantic으로 반영한다.
         semantic = _overlay_frames(_session_frame(state), semantic)
         stage, drt_status = decide_stage(semantic)

@@ -57,6 +57,35 @@ def test_social_visit_requires_exact_destination() -> None:
     assert follow.specific_place == "서울 동작구 사당로 10"
 
 
+def test_pickup_location_accepts_free_text_place_name() -> None:
+    """실제 통화(2026-08-12)에서 재현된 버그: "출발하실 위치를 알려주실 수
+    있을까요?"에 "사당역"이라고 답해도 extract_pickup()이 "집 앞"류 고정 문구만
+    인식해 같은 질문을 무한 반복했다. exact_destination과 같은 방식으로, 방금
+    그 슬롯을 물어본 경우에는 원문을 그대로 픽업 위치로 받아야 한다."""
+    analyzer = DRTAnalyzer(Settings(gemini_policy="off"))
+    state = SessionState(location=Location(37.4849, 126.9710, 15))
+    sequence = [
+        ("병원 가고 싶어", "reservation_consent"),
+        ("무릎이 아파", "reservation_consent"),
+        ("네", "place_resolution_method"),
+        ("가까운 곳", "date"),
+        ("내일", "time"),
+        ("오전 10시", "pickup_location"),
+    ]
+    for utterance, expected_target in sequence:
+        result = analyzer.analyze_turn(utterance, state, allow_internal_gemini=False)
+        assert result.target_slot == expected_target
+
+    first_reply = analyzer.analyze_turn("사당역", state, allow_internal_gemini=False)
+    assert first_reply.pickup_location == "사당역"
+    assert "pickup_location" not in first_reply.missing_slots
+    assert first_reply.target_slot != "pickup_location"
+
+    # 같은 슬롯을 두 번 물어도 루프에 빠지지 않는지 — 이미 채워졌으므로 다시
+    # 물으면 안 된다.
+    assert state.pickup_location == "사당역"
+
+
 def test_negative_confirmation_stops_drt() -> None:
     analyzer = DRTAnalyzer(Settings(gemini_policy="off"))
     state = SessionState()
