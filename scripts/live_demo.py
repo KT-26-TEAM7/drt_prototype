@@ -1,13 +1,18 @@
-"""care-call-bot의 분석기를 직접 불러 한 문장을 끝까지 흘려 보는 데모.
+"""옛 care-call-bot 분석기 출력 형식으로 브릿지 파이프라인을 끝까지 흘려 보는 데모.
 
-care-call-bot 리포는 브릿지의 의존성이 아니다. 이 스크립트만 예외적으로,
-경로를 알려 주면 그쪽 `drt_analyzer.analyze_conversation()`을 불러다 쓴다.
-(그쪽은 google-genai·python-dotenv가 필요하고 GEMINI_KEY가 없으면 규칙 기반으로 동작한다.)
+**2026-08-11 이후**: 이 폴더 안의 `care_call_bot/drt_analyzer.py`는 `carecall_drt`로
+대체되어 삭제되었다(docs/04_carecall_drt_이식.md). 이 스크립트는 브릿지의
+`bridge/contract.py`가 정의하는 **옛 분석기 출력 계약**(`search_mode`/`search_keywords`
+등)을 그대로 데모하는 도구라, carecall_drt(다른 필드 체계)로는 대체할 수 없다. 그래서
+여전히 외부의 원본 care-call-bot 체크아웃(또는 같은 출력 형식을 내는 분석기)을
+`--analyzer` 경로로 받아서만 동작한다 — 로컬 기본 경로는 없다.
 
     py scripts/live_demo.py "어르신: 가까운 치과에 가려는데 차 좀 불러줘." ^
         --analyzer "C:\\Users\\hyung\\Downloads\\care-call-bot-main\\care-call-bot-main" --offline
 
-`--analyzer`를 생략하면 환경변수 CARE_CALL_BOT_PATH를 쓴다.
+`--analyzer`를 생략하면 환경변수 CARE_CALL_BOT_PATH를 쓴다. **외부 분석기 없이 같은
+브릿지 파이프라인을 보고 싶으면** 미리 만들어 둔 분석 결과 JSON을 쓰는
+`scripts/run_handoff.py samples\\*.json --offline`을 대신 쓰면 된다.
 """
 from __future__ import annotations
 
@@ -24,14 +29,17 @@ from bridge.drt_client import DrtServiceClient  # noqa: E402
 from bridge.fake_service import FakeDrtService  # noqa: E402
 from bridge.orchestrator import DrtHandoff  # noqa: E402
 
-# 케어콜 분석기도 이 폴더 안에 함께 있다.
-DEFAULT_ANALYZER_DIR = PROJECT_DIR / "care_call_bot"
-
 
 def load_analyzer(analyzer_dir: str):
     path = Path(analyzer_dir).expanduser()
     if not (path / "drt_analyzer.py").exists():
-        raise SystemExit(f"drt_analyzer.py를 찾지 못했습니다: {path}")
+        raise SystemExit(
+            f"drt_analyzer.py를 찾지 못했습니다: {path}\n"
+            "이 폴더 안의 care_call_bot/drt_analyzer.py는 carecall_drt로 대체되어 "
+            "삭제되었습니다(docs/04_carecall_drt_이식.md). --analyzer로 외부 "
+            "care-call-bot 체크아웃 경로를 주거나, 분석기 없이 같은 파이프라인을 보려면 "
+            "scripts/run_handoff.py samples\\*.json --offline 을 쓰세요."
+        )
     sys.path.insert(0, str(path))
     try:
         import drt_analyzer  # type: ignore
@@ -47,12 +55,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="care-call-bot 분석기 -> 브릿지 -> DRT 연결 데모")
     parser.add_argument("utterance", help="어르신 발화")
     parser.add_argument("--analyzer",
-                        default=os.getenv("CARE_CALL_BOT_PATH", str(DEFAULT_ANALYZER_DIR)),
-                        help="케어콜 분석기 폴더 (기본값은 이 폴더 안의 care_call_bot)")
+                        default=os.getenv("CARE_CALL_BOT_PATH", ""),
+                        help="케어콜 분석기 폴더(외부 care-call-bot 체크아웃). "
+                             "생략 시 CARE_CALL_BOT_PATH 환경변수를 쓴다")
     parser.add_argument("--user", default="elder_demo_01")
     parser.add_argument("--offline", action="store_true", help="가짜 DRT 서버 사용")
     args = parser.parse_args()
 
+    if not args.analyzer:
+        raise SystemExit(
+            "--analyzer 경로가 없습니다(또는 CARE_CALL_BOT_PATH 환경변수를 설정하세요). "
+            "분석기 없이 같은 파이프라인을 보려면 "
+            "scripts/run_handoff.py samples\\*.json --offline 을 쓰세요."
+        )
     analyzer = load_analyzer(args.analyzer)
     result = analyzer.analyze_conversation(args.utterance)
 

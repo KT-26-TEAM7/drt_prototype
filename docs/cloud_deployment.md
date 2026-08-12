@@ -22,8 +22,9 @@ ClawOps 대시보드에서 만든 AI 에이전트(GPT Realtime + TTS)는 "외부
    ↓ MCP 도구 호출 (start_call → send_utterance × N → end_call)
 mcp_server            (Render, 신규)
    ↓ HTTP + X-Call-Token
-main_server            (Render) — 대화 상태·DRT 판단의 유일한 두뇌, 기존 코드 그대로
-   ↓ bridge/ + care_call_bot/drt_analyzer.py (in-process import, 기존 그대로)
+main_server            (Render) — 대화 상태·DRT 판단의 유일한 두뇌
+   ↓ carecall_drt/(대화 분석+다중 턴 상태+DRT 호출) + bridge/(위치·음성규칙·문자,
+     2026-08-11 carecall_drt 이식 — docs/04_carecall_drt_이식.md) — in-process import
    ↓ HTTP + X-Relay-Token
 drt_service             (Render) — 목적지 검색·경로·예약
    ↓ HTTP
@@ -142,8 +143,8 @@ $env:MAIN_SERVER_BASE_URL = "http://127.0.0.1:8002"
 | `main_server` | `main_server/Dockerfile` | **repo root**(`.`) — `bridge/`·`care_call_bot/`를 import하므로 |
 | `mcp_server` | `mcp_server/Dockerfile` | `mcp_server/` |
 
-`main_server`의 Dockerfile은 `COPY . .`가 아니라 `bridge/`·`care_call_bot/`·
-`main_server/`·`data/`만 선택적으로 복사한다 — repo root에는 다른 세 서비스와 각자의
+`main_server`의 Dockerfile은 `COPY . .`가 아니라 `bridge/`·`carecall_drt/`·
+`care_call_bot/`·`main_server/`·`data/`만 선택적으로 복사한다 — repo root에는 다른 세 서비스와 각자의
 `.venv/`, sqlite 파일들이 같이 있어서 통째로 복사하면 이미지가 불필요하게 커진다.
 `care_call_bot/.env`, `data/*.jsonl`은 `.gitignore`에 있어 Render가 클론하는 git
 스냅샷에는 애초에 없으므로 유출 위험은 없다. `GEMINI_KEY`는 `.env` 파일 없이도 Render
@@ -182,6 +183,7 @@ repo root의 `render.yaml`이 4개 서비스를 한 번에 정의한다. Render 
 | `drt-service` | `RELAY_API_TOKEN` | `secrets.token_urlsafe(32)`로 생성 — **`main-server`와 동일한 값** |
 | `drt-service` | `TMAP_APP_KEY` | 위와 같은 키 |
 | `main-server` | `RELAY_API_TOKEN` | `drt-service`와 동일한 값 |
+| `main-server` | `DRT_RELAY_TOKEN` | **`RELAY_API_TOKEN`과 같은 값**(carecall_drt가 drt_service를 직접 부를 때 쓰는 이름 — 2026-08-11 이식) |
 | `main-server` | `MAIN_SERVER_TOKEN` | 새로 생성 — **`mcp-server`와 동일한 값** |
 | `main-server` | `GEMINI_KEY` | Gemini API 키 |
 | `mcp-server` | `MAIN_SERVER_TOKEN` | `main-server`와 동일한 값 |
@@ -308,11 +310,11 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
 |---|---|---|
 | `mcp_server` 첫 요청마다 `Task group is not initialized` | `Starlette` 부모 앱에 `lifespan=mcp_app.lifespan`을 안 넘김 | `mcp_server/server.py`의 앱 조립부 확인 |
 | `main-server`/`drt-service` 401 | 토큰이 서로 안 맞음 | Render 대시보드에서 `RELAY_API_TOKEN`(drt-service↔main-server), `MAIN_SERVER_TOKEN`(main-server↔mcp-server) 값이 양쪽 서비스에서 정확히 같은지 확인 |
-| `send_utterance`가 계속 `session_not_found`(404) | `main-server`가 재배포·재시작돼 인메모리 세션이 날아감(`ConversationStore`가 프로세스 메모리에만 있음), 또는 콜드 스타트 중 다른 인스턴스로 라우팅됨 | 통화 중 재배포하지 않기. 무료 플랜의 여러 인스턴스 분산이 의심되면 유료 플랜에서 인스턴스 수 확인 |
+| `send_utterance`가 계속 `session_not_found`(404) | `main-server`가 재배포·재시작돼 인메모리 세션이 날아감(`CareCallBridge`의 세션 딕셔너리가 프로세스 메모리에만 있음), 또는 콜드 스타트 중 다른 인스턴스로 라우팅됨 | 통화 중 재배포하지 않기. 무료 플랜의 여러 인스턴스 분산이 의심되면 유료 플랜에서 인스턴스 수 확인 |
 | 통화 시작 인사가 몇십 초 늦게 나옴, 또는 (아래) | 콜드 스타트(4절) | `main-server`/`mcp-server`를 Starter로 올리거나, 데모 직전에 미리 요청 한 번씩 보내 깨워 둠 |
 | `docker build` 안 해봄 | 이 문서를 쓴 환경에 Docker가 없었음(3절 참고) | 실제 빌드 가능한 환경에서 한 번 확인 |
 | 인사도 안 나오고 어르신께 "user id가 뭐예요"라고 되물음 | `start_call`의 `user_id` 파라미터에 기본값이 없어서(예전 코드), 에이전트가 뭘 넣어야 할지 몰라 통화 시작 자체를 진행 못 함 | `start_call(user_id: str = DEFAULT_USER_ID)`로 기본값을 넣어 해결(아래 기록) — 시스템 프롬프트에도 "user_id는 절대 되묻지 않는다"를 명시 |
-| 목적지 이름을 여러 번 정확히 말해도 계속 같은 되물음 루프에 갇힘 | `care_call_bot/drt_analyzer.py`의 `GEMINI_TEMP_DISABLED`가 한 번 Gemini quota 초과되면 **프로세스가 재시작되기 전까지 영원히** True로 고정돼, 그 뒤 모든 통화가 정확도 낮은 규칙 기반 분석만 씀(장수명 서버에는 안 맞는 설계였음) | 시간 기반 쿨다운(`GEMINI_COOLDOWN_SEC`, 기본 60초)으로 교체 — main-server 재배포 후 확인 |
+| (2026-08-11 carecall_drt 이식 이전 기록) 목적지 이름을 여러 번 정확히 말해도 계속 같은 되물음 루프에 갇힘 | `care_call_bot/drt_analyzer.py`의 `GEMINI_TEMP_DISABLED`가 한 번 Gemini quota 초과되면 **프로세스가 재시작되기 전까지 영원히** True로 고정돼, 그 뒤 모든 통화가 정확도 낮은 규칙 기반 분석만 씀(장수명 서버에는 안 맞는 설계였음) | 그 파일은 삭제되고 `carecall_drt`로 대체됨(같은 영구 플래그 패턴 없음, 아래 기록 참고) — 재발하면 `carecall_drt/gemini_client.py`의 `GeminiCallError` 처리를 확인 |
 
 ### 실제 발생 기록 — Gemini quota 초과 플래그가 영구 고정돼 규칙 기반 루프에 갇힘 (2026-08-11)
 

@@ -83,6 +83,15 @@ services:
       # drt-service와 동일한 값으로 직접 입력
       - key: RELAY_API_TOKEN
         sync: false
+      # 2026-08-11 carecall_drt 이식 이후 신규 — carecall_drt가 drt_service를 직접
+      # 호출할 때 쓰는 이름(위 DRT_BASE_URL/RELAY_API_TOKEN과 각각 같은 값이어야
+      # 한다. docs/04_carecall_drt_이식.md 참고).
+      - key: DRT_BACKEND_URL
+        value: https://drt-service.onrender.com
+      - key: DRT_RELAY_TOKEN
+        sync: false
+      - key: DRT_BACKEND_ENABLED
+        value: "true"
       # 신규 — mcp-server가 X-Call-Token으로 보낼 값. mcp-server와 동일한 값으로 직접 입력
       - key: MAIN_SERVER_TOKEN
         sync: false
