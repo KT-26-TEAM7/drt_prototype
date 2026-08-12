@@ -358,20 +358,33 @@ main-server: clawops_call_id로 저장해 둔 번호를 찾아 그 통화 세션
 - `main_server/care_bridge.py`의 `CallSession.elder_phone`에 저장되고, `_notify()`가
   프로필의 고정 번호보다 우선해서 쓴다.
 
-**아직 확인 못 한 것(2026-08-12 시점)**:
-1. **웹훅 실제 필드명** — 공식 문서를 못 읽어서(JS 렌더링 사이트) 확신할 수 없다.
-   `clawops` SDK가 Twilio류 서명 방식을 쓰는 걸로 봐서 폼 인코딩 PascalCase
-   (`CallSid`/`To`/`CallStatus`)일 가능성이 높다고 보고 `extract_call_id_and_phone()`
-   (`main_server/clawops_webhook.py`)이 그 후보와 snake_case 후보를 모두 시도하게
-   만들어 뒀다. **실제 웹훅이 처음 도착하면 Render 로그(`[ClawOps webhook] ...
-   raw_keys=[...]`)에서 진짜 필드명을 확인해 필요하면 후보 목록을 정리해야 한다.**
-2. **`status_callback` 등록 위치** — ClawOps SDK의 `Calls.create()`는
-   `status_callback`/`status_callback_event` 파라미터를 받지만, 지금 통화는 ClawOps
-   대시보드의 "배치 발신" 기능으로 걸고 있어서 그 캠페인 설정에 콜백 URL을 넣는
-   곳이 있는지, 아니면 "전화번호" 관리 화면에서 번호 단위로 설정하는지 확인이
-   필요하다. 콜백 URL은 `https://main-server-ecm1.onrender.com/webhooks/clawops/call-status`.
-3. `clawops_call_id`를 AI 에이전트가 실제로 채워서 보내는지 — 플랫폼이 통화 ID를
-   시스템 컨텍스트로 노출해 주는지에 달려 있다. 실제 통화로 검증 필요.
+**실측 결과(2026-08-12) — 웹훅은 발생하지 않았다**: ClawOps 대시보드 "API &
+Webhooks" → Webhooks에 `agent.connected`/`agent.disconnected`/`assignment.completed`
+세 이벤트를 모두 등록하고 실제 통화로 여러 번 테스트했지만, "최근 발송 로그"에
+**한 건도 기록되지 않았다**(실패 기록조차 없음 — 아예 발생하지 않았다는 뜻).
+ClawOps가 제공하는 고정 이벤트 목록(`message.*`, `transcript.*`, `summary.*`,
+`recording.*`, `agent.connected/disconnected`, `callflow.ended`,
+`assignment.completed`) 중 "발신 통화가 시작되며 상대 번호를 알려주는" 이벤트가
+없거나, 이 계정/에이전트 구성에서는 다른 방식이 필요한 것으로 보인다. **아직
+결론 내지 못함 — ClawOps 고객지원에 문의가 필요하다.**
+
+**임시 대체(사용자 결정, 2026-08-12)**: 웹훅이 잡힐 때까지 `CareCallBridge.
+_lookup_recent_call_number()`(`main_server/care_bridge.py`)가 ClawOps
+`calls.list(status="in-progress", page_size=1)`로 "지금 진행 중인 가장 최근 통화"의
+번호를 대신 가져온다. `clawops_call_id`로 웹훅 매칭에 성공하면 이 폴백은 아예
+호출되지 않는다.
+
+> ⚠ **이 폴백은 통화가 동시에 하나만 진행 중이라고 가정한다.** 두 통화가 겹치면
+> 다른 사람 번호가 섞일 위험이 있다 — 순차 테스트에는 안전하지만, 여러 통화가
+> 동시에 오갈 수 있는 실제 운영 전에는 반드시 웹훅 방식(또는 그 대체 수단)으로
+> 돌아가야 한다.
+
+**여전히 남은 것**:
+1. ClawOps가 실제로 필요한 이벤트를 제공하는지 고객지원에 확인.
+2. 확인되면 `main_server/clawops_webhook.py::extract_call_id_and_phone()`의 필드명
+   후보를 실제 페이로드에 맞게 정리(Render 로그의 `raw_keys`로 확인).
+3. 웹훅이 안정화되면 `_lookup_recent_call_number()` 폴백은 제거하거나 최후
+   수단으로만 남긴다.
 
 ---
 

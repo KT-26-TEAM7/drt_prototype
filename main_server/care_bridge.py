@@ -125,6 +125,22 @@ class CareCallBridge:
         # ClawOps 통화 상태 웹훅(POST /webhooks/clawops/call-status)이 채우고,
         # start_call이 clawops_call_id로 한 번만 꺼내 쓴다.
         self.pending_calls = PendingCallRegistry()
+        self._clawops_client = self._build_clawops_client()
+
+    def _build_clawops_client(self):
+        """calls.list() 폴백 조회용 클라이언트(있으면). ClawOpsSmsSender와
+        키는 같지만 별도 인스턴스로 둔다 — 발송기 내부 구현에 의존하지 않기 위해."""
+        if not (bridge_settings.clawops_api_key and bridge_settings.clawops_account_id):
+            return None
+        try:
+            import clawops
+
+            return clawops.ClawOps(
+                api_key=bridge_settings.clawops_api_key,
+                account_id=bridge_settings.clawops_account_id,
+            )
+        except Exception:
+            return None
 
     def _build_responder(self):
         if self.settings.gemini_api_key:
@@ -162,6 +178,10 @@ class CareCallBridge:
         # 웹훅이 이미 도착해 있으면(보통 통화 연결과 거의 동시) 여기서 한 번만
         # 꺼내 쓴다 — claim()이 저장소에서 지우므로 이후 재사용되지 않는다.
         elder_phone = self.pending_calls.claim(clawops_call_id) if clawops_call_id else None
+        if elder_phone is None:
+            # 사용자 결정(2026-08-12, 임시 조치): 웹훅 이벤트가 아직 안 잡혀서,
+            # calls.list()로 "지금 진행 중인 가장 최근 통화" 번호를 대신 쓴다.
+            elder_phone = self._lookup_recent_call_number()
         self._sessions[session_id] = CallSession(
             session_id=session_id,
             user_id=user_id,
@@ -170,6 +190,30 @@ class CareCallBridge:
             elder_phone=elder_phone,
         )
         return GREETING
+
+    def _lookup_recent_call_number(self) -> str | None:
+        """**임시 조치(2026-08-12)**: 지금 진행 중인 가장 최근 통화의 번호를
+        ClawOps `calls.list()`로 조회한다.
+
+        웹훅(`agent.connected` 등)이 실제로는 발생하지 않아(발송 기록 0건으로
+        확인됨) 정확한 이벤트를 알아내기 전까지 쓰는 대체 수단이다.
+
+        **안전하지 않은 가정**: 통화가 동시에 하나만 진행 중이라고 가정한다.
+        두 통화가 겹치면 다른 사람 번호가 섞일 수 있다 — 순차 테스트에서만
+        쓰고, 실제 동시 다발 통화 운영 전에는 웹훅 방식(§clawops_webhook.py)
+        으로 돌아가야 한다. 실패하거나 결과가 없으면 조용히 None을 돌려줘
+        프로필의 고정 번호로 폴백시킨다(통화 시작을 절대 막지 않는다).
+        """
+        if self._clawops_client is None:
+            return None
+        try:
+            page = self._clawops_client.calls.list(status="in-progress", page_size=1, timeout=5.0)
+            calls = page.data
+            if calls:
+                return calls[0].to
+        except Exception as exc:
+            print(f"[ClawOps calls.list 폴백] 실패: {type(exc).__name__}: {exc}", flush=True)
+        return None
 
     def end_call(self, session_id: str) -> None:
         self._sessions.pop(session_id, None)
