@@ -86,6 +86,21 @@ def test_pickup_location_accepts_free_text_place_name() -> None:
     assert state.pickup_location == "사당역"
 
 
+def test_is_affirmative_recognizes_bulleojwo() -> None:
+    """실제 통화(2026-08-12)에서 재현된 버그: 경로 확인 질문("이 경로로
+    예약할까요?")에 "어 불러줘"/"불러줘"라고 반복 답해도 인식하지 못해 같은
+    질문만 되풀이됐다. "불러줘"는 애초에 차량을 요청할 때 쓰는 동사와 같은데도
+    확인 답변으로는 감지되지 않고 있었다. 부정형("안 불러도 돼")과는 구분돼야
+    한다."""
+    from carecall_drt.analyzer import is_affirmative, is_negative
+
+    assert is_affirmative("어 불러줘") is True
+    assert is_affirmative("응 불러줘") is True
+    assert is_affirmative("불러줘") is True
+    assert is_affirmative("안 불러도 돼") is False
+    assert is_negative("아니 안 불러도 돼") is True
+
+
 def test_negative_confirmation_stops_drt() -> None:
     analyzer = DRTAnalyzer(Settings(gemini_policy="off"))
     state = SessionState()

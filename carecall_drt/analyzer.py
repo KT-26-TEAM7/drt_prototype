@@ -275,6 +275,16 @@ def detect_place_preference(text: str) -> str:
 
 
 def is_affirmative(text: str) -> bool:
+    """예/아니오를 묻는 질문(특히 "이 경로로 예약할까요?")에 대한 답을 판정한다.
+
+    실제 통화(2026-08-12)에서 "어 불러줘"/"응 불러줘"/"불러줘"라고 반복 답해도
+    예약이 진행되지 않고 같은 확인 질문만 되풀이되는 문제가 확인됐다 — "불러줘"가
+    긍정 목록에 없어 감지 못하고 있었다(정작 처음 차량을 요청할 때 쓰는 말인
+    "차 좀 불러줘"와 같은 동사인데도 확인 답변으로는 인식 못 함). "어 불러줘"처럼
+    "불러"가 맨 앞이 아니라 필러 뒤에 오는 경우까지 잡아야 해서, 이 단어만은
+    문장 앞머리가 아니라 어디에 있든 긍정으로 본다("불러"는 이 도메인에서 차량
+    호출 의미로만 쓰여 다른 뜻과 헷갈릴 위험이 낮다).
+    """
     compact = normalize(strip_speaker(text))
     affirmative = {
         "응",
@@ -289,7 +299,14 @@ def is_affirmative(text: str) -> bool:
         "예약해줘",
         "맞아",
     }
-    return compact in affirmative or compact.startswith(("응", "네", "예", "그래", "좋아"))
+    # "안 불러도 돼"/"못 불러"처럼 부정어와 결합되면 "불러"가 들어 있어도 긍정이
+    # 아니다 — is_negative()가 이미 이런 문장을 따로 잡아 준다.
+    calls_it = "불러" in compact and not has_any(compact, ["안불러", "못불러"])
+    return (
+        compact in affirmative
+        or compact.startswith(("응", "네", "예", "그래", "좋아"))
+        or calls_it
+    )
 
 
 def is_negative(text: str) -> bool:
