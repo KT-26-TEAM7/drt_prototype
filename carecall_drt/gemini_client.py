@@ -131,7 +131,15 @@ class _GeminiBase:
             raise GeminiUnavailableError("GEMINI_API_KEY 또는 GEMINI_KEY가 설정되지 않았습니다.")
         genai, types = _load_sdk()
         self._types = types
-        self._client = genai.Client(api_key=self.settings.gemini_api_key)
+        # gemini_timeout_s(기본 8초)가 정의만 되고 실제로는 어디에도 안 쓰이고
+        # 있었다 — Client에 타임아웃을 안 걸면 SDK 기본값(수십 초~무제한에 가까움)을
+        # 따르므로, Gemini가 느려지면 응답이 무기한 늦어져 통화 전체가 멈춘다
+        # (2026-08-12 실제 통화에서 재현: "잠시만요... 처리 중이라..."가 끝없이
+        # 반복됨). HttpOptions.timeout은 밀리초 단위다.
+        self._client = genai.Client(
+            api_key=self.settings.gemini_api_key,
+            http_options=types.HttpOptions(timeout=int(self.settings.gemini_timeout_s * 1000)),
+        )
 
     def _generate(self, prompt: str, schema: dict[str, Any]) -> tuple[dict[str, Any], float]:
         started = time.perf_counter()
