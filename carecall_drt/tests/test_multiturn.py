@@ -101,6 +101,19 @@ def test_is_affirmative_recognizes_bulleojwo() -> None:
     assert is_negative("아니 안 불러도 돼") is True
 
 
+def test_is_affirmative_recognizes_jinhaenghaejwo() -> None:
+    """실제 통화(2026-08-12, 픽업 위치 수정 이후 후속 통화)에서 재현: "이 경로로
+    예약할까요?"에 "어 진행해 줘"라고 두 번이나 답했지만 인식하지 못해 같은
+    질문만 반복됐다. "불러줘"와 같은 패턴("어" 필러 뒤에 오는 경우 포함)으로
+    추가하되, "진행하지 마" 같은 부정형과는 구분돼야 한다."""
+    from carecall_drt.analyzer import is_affirmative
+
+    assert is_affirmative("진행해 줘") is True
+    assert is_affirmative("어 진행해 줘") is True
+    assert is_affirmative("진행하지 마") is False
+    assert is_affirmative("안 진행해도 돼") is False
+
+
 def test_negative_confirmation_stops_drt() -> None:
     analyzer = DRTAnalyzer(Settings(gemini_policy="off"))
     state = SessionState()

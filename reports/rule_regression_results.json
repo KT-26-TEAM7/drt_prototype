@@ -8,7 +8,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 1.356,
+    "rule_latency_ms": 3.05,
     "passed": true
   },
   {
@@ -20,7 +20,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.272,
+    "rule_latency_ms": 1.622,
     "passed": true
   },
   {
@@ -32,7 +32,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.24,
+    "rule_latency_ms": 1.949,
     "passed": true
   },
   {
@@ -44,7 +44,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.237,
+    "rule_latency_ms": 0.971,
     "passed": true
   },
   {
@@ -56,7 +56,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.244,
+    "rule_latency_ms": 0.694,
     "passed": true
   },
   {
@@ -68,7 +68,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.453,
+    "rule_latency_ms": 0.445,
     "passed": true
   },
   {
@@ -80,7 +80,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.241,
+    "rule_latency_ms": 0.419,
     "passed": true
   },
   {
@@ -92,7 +92,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.212,
+    "rule_latency_ms": 0.427,
     "passed": true
   },
   {
@@ -104,7 +104,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.322,
+    "rule_latency_ms": 0.478,
     "passed": true
   },
   {
@@ -116,7 +116,7 @@
     "actual_category": "medical_general",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.567,
+    "rule_latency_ms": 0.53,
     "passed": true
   },
   {
@@ -128,7 +128,7 @@
     "actual_category": "medical_dental",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.149,
+    "rule_latency_ms": 0.342,
     "passed": true
   },
   {
@@ -140,7 +140,7 @@
     "actual_category": "pharmacy",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.219,
+    "rule_latency_ms": 0.505,
     "passed": true
   },
   {
@@ -152,7 +152,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.312,
+    "rule_latency_ms": 1.787,
     "passed": true
   },
   {
@@ -164,7 +164,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.297,
+    "rule_latency_ms": 1.142,
     "passed": true
   },
   {
@@ -176,7 +176,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.299,
+    "rule_latency_ms": 0.901,
     "passed": true
   },
   {
@@ -188,7 +188,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.314,
+    "rule_latency_ms": 0.748,
     "passed": true
   },
   {
@@ -200,7 +200,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.334,
+    "rule_latency_ms": 0.897,
     "passed": true
   },
   {
@@ -212,7 +212,7 @@
     "actual_category": "unknown",
     "target_slot": null,
     "should_call_gemini": false,
-    "rule_latency_ms": 0.333,
+    "rule_latency_ms": 0.847,
     "passed": true
   },
   {
@@ -224,7 +224,7 @@
     "actual_category": "medical_general",
     "target_slot": "medical_department",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.3,
+    "rule_latency_ms": 0.747,
     "passed": true
   },
   {
@@ -236,7 +236,7 @@
     "actual_category": "pharmacy",
     "target_slot": "date",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.195,
+    "rule_latency_ms": 0.523,
     "passed": true
   },
   {
@@ -248,7 +248,7 @@
     "actual_category": "pharmacy",
     "target_slot": "place_resolution_method",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.225,
+    "rule_latency_ms": 0.635,
     "passed": true
   },
   {
@@ -260,7 +260,7 @@
     "actual_category": "medical_dental",
     "target_slot": "place_resolution_method",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.176,
+    "rule_latency_ms": 0.457,
     "passed": true
   },
   {
@@ -272,7 +272,7 @@
     "actual_category": "pharmacy",
     "target_slot": "time",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.243,
+    "rule_latency_ms": 0.64,
     "passed": true
   },
   {
@@ -284,7 +284,7 @@
     "actual_category": "shopping_market",
     "target_slot": "place_resolution_method",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.34,
+    "rule_latency_ms": 1.147,
     "passed": true
   },
   {
@@ -296,7 +296,7 @@
     "actual_category": "public_bank",
     "target_slot": "pickup_location",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.183,
+    "rule_latency_ms": 0.927,
     "passed": true
   },
   {
@@ -308,7 +308,7 @@
     "actual_category": "shopping_market",
     "target_slot": "pickup_location",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.257,
+    "rule_latency_ms": 0.794,
     "passed": true
   },
   {
@@ -320,7 +320,7 @@
     "actual_category": "medical_orthopedics",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.265,
+    "rule_latency_ms": 0.728,
     "passed": true
   },
   {
@@ -332,7 +332,7 @@
     "actual_category": "public_bank",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.873,
+    "rule_latency_ms": 0.819,
     "passed": true
   },
   {
@@ -344,7 +344,7 @@
     "actual_category": "shopping_market",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.943,
+    "rule_latency_ms": 0.713,
     "passed": true
   },
   {
@@ -356,7 +356,7 @@
     "actual_category": "medical_general",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.863,
+    "rule_latency_ms": 0.96,
     "passed": true
   },
   {
@@ -368,7 +368,7 @@
     "actual_category": "shopping_mart",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.77,
+    "rule_latency_ms": 0.949,
     "passed": true
   },
   {
@@ -380,7 +380,7 @@
     "actual_category": "leisure_library",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.579,
+    "rule_latency_ms": 0.681,
     "passed": true
   },
   {
@@ -392,7 +392,7 @@
     "actual_category": "welfare_center",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.465,
+    "rule_latency_ms": 0.405,
     "passed": true
   },
   {
@@ -404,7 +404,7 @@
     "actual_category": "shopping_convenience",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.321,
+    "rule_latency_ms": 0.313,
     "passed": true
   },
   {
@@ -416,7 +416,7 @@
     "actual_category": "senior_center",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.344,
+    "rule_latency_ms": 0.318,
     "passed": true
   },
   {
@@ -428,7 +428,7 @@
     "actual_category": "medical_internal",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.252,
+    "rule_latency_ms": 0.262,
     "passed": true
   },
   {
@@ -440,7 +440,7 @@
     "actual_category": "medical_internal",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.246,
+    "rule_latency_ms": 0.435,
     "passed": true
   },
   {
@@ -452,7 +452,7 @@
     "actual_category": "medical_ophthalmology",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.255,
+    "rule_latency_ms": 0.271,
     "passed": true
   },
   {
@@ -464,7 +464,7 @@
     "actual_category": "medical_ent",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.263,
+    "rule_latency_ms": 0.241,
     "passed": true
   },
   {
@@ -476,7 +476,7 @@
     "actual_category": "medical_dermatology",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.226,
+    "rule_latency_ms": 0.216,
     "passed": true
   },
   {
@@ -488,7 +488,7 @@
     "actual_category": "medical_rehabilitation",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.259,
+    "rule_latency_ms": 0.351,
     "passed": true
   },
   {
@@ -500,7 +500,7 @@
     "actual_category": "public_community_center",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.3,
+    "rule_latency_ms": 0.205,
     "passed": true
   },
   {
@@ -512,7 +512,7 @@
     "actual_category": "public_city_office",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.274,
+    "rule_latency_ms": 0.394,
     "passed": true
   },
   {
@@ -524,7 +524,7 @@
     "actual_category": "religious_church",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.302,
+    "rule_latency_ms": 0.435,
     "passed": true
   },
   {
@@ -536,7 +536,7 @@
     "actual_category": "religious_church",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.286,
+    "rule_latency_ms": 0.461,
     "passed": true
   },
   {
@@ -548,7 +548,7 @@
     "actual_category": "religious_temple",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.296,
+    "rule_latency_ms": 0.508,
     "passed": true
   },
   {
@@ -560,7 +560,7 @@
     "actual_category": "religious_catholic",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.301,
+    "rule_latency_ms": 0.372,
     "passed": true
   },
   {
@@ -572,7 +572,7 @@
     "actual_category": "religious_church",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.274,
+    "rule_latency_ms": 0.34,
     "passed": true
   },
   {
@@ -584,7 +584,7 @@
     "actual_category": "social_family_visit",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.297,
+    "rule_latency_ms": 0.391,
     "passed": true
   },
   {
@@ -596,7 +596,7 @@
     "actual_category": "social_friend_visit",
     "target_slot": "reservation_consent",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.301,
+    "rule_latency_ms": 0.341,
     "passed": true
   },
   {
@@ -608,7 +608,7 @@
     "actual_category": "social_family_visit",
     "target_slot": "exact_destination",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.271,
+    "rule_latency_ms": 0.322,
     "passed": true
   },
   {
@@ -620,7 +620,7 @@
     "actual_category": "social_family_visit",
     "target_slot": "exact_destination",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.286,
+    "rule_latency_ms": 0.316,
     "passed": true
   },
   {
@@ -632,7 +632,7 @@
     "actual_category": "unknown",
     "target_slot": "destination_category",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.45,
+    "rule_latency_ms": 0.351,
     "passed": true
   },
   {
@@ -644,7 +644,7 @@
     "actual_category": "unknown",
     "target_slot": "destination_category",
     "should_call_gemini": false,
-    "rule_latency_ms": 0.352,
+    "rule_latency_ms": 0.383,
     "passed": true
   }
 ]

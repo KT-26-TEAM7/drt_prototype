@@ -110,6 +110,17 @@ class ClawOpsSmsSender:
             ok = False
             error = f"{type(exc).__name__}: {exc}"
 
+        # sms_log_path는 Render의 임시 파일시스템에만 쌓여 원격에서 못 읽는다
+        # (실제로 문자 미발송 원인을 로그로 확인 못 해 진단이 막힌 적이 있었다).
+        # 전화번호·본문은 개인정보라 찍지 않고, 성공/실패와 원인만 stdout에
+        # 남겨 Render Logs에서 바로 보이게 한다.
+        print(
+            f"[ClawOpsSmsSender] role={message.role} ok={ok}"
+            f"{f' message_id={message_id}' if message_id else ''}"
+            f"{f' error={error}' if error else ''}",
+            flush=True,
+        )
+
         if self.log_path is not None:
             try:
                 self.log_path.parent.mkdir(parents=True, exist_ok=True)
