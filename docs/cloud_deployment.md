@@ -342,6 +342,7 @@ Render 무료 웹 서비스는 **15분 무통신 시 스핀다운**되고, 다�
 | "출발하실 위치를 알려주실 수 있을까요?"에 역 이름 등으로 답해도 같은 질문 반복 | `carecall_drt/analyzer.py::extract_pickup()`이 "집 앞"류 고정 문구만 인식(원본 패키지 결함) | 2026-08-12 수정(커밋 1510fc3) — exact_destination과 같은 문맥 인지 자유 응답 처리 추가 |
 | 특정 발화 이후 응답이 아예 안 오고 "처리 중" 반복 | `GEMINI_TIMEOUT_S`가 정의만 되고 실제 Gemini 호출에 적용된 적이 없어 무기한 대기(원본 패키지 결함) | 2026-08-12 수정(커밋 6018a9b) — `genai.Client(http_options=...)`로 실제 연결 |
 | 명확한 요청("차 좀 불러줘")에도 도구 호출과 무관한 즉흥 답변(예: "택시 앱을 쓰세요") | ClawOps 에이전트가 그 턴에 `send_utterance`(심하면 통화 시작의 `start_call`부터)를 아예 호출하지 않음 — mcp-server·main-server 로그에 해당 시각 요청 자체가 없어 확인됨. 프롬프트는 이미 올바르게 설정돼 있었는데도 발생(§6 "실제 발생 기록" 참고) | 우리 코드 문제 아님(ClawOps 쪽) — §6의 강화된 프롬프트(v2)로 재시도, 안 되면 ClawOps의 도구 강제 호출 설정 확인 |
+| 예약 문자 속 조회 링크가 안 열림(404) | mock-drt-server의 `TRACKING_BASE_URL`이 이름 충돌로 배정된 실제 주소(`mock-drt-server-4yf1`)가 아니라 render.yaml의 옛 고정값(`mock-drt-server`)을 가리키고 있었음 | 2026-08-12 수정 — 대시보드에서 `TRACKING_BASE_URL`/`DRT_SERVER_BASE_URL`/`DISPATCH_BASE_URL` 세 곳을 실제 주소로 정정(render.yaml도 갱신) |
 
 ### 실제 발생 기록 — Gemini quota 초과 플래그가 영구 고정돼 규칙 기반 루프에 갇힘 (2026-08-11)
 
@@ -407,6 +408,33 @@ ClawOps에 올바르게 입력되어 있었다(사용자가 직접 확인해 붙
 더 확실할 것으로 보이나 미확인 — **이 항목은 우리 코드(main_server/mcp_server/
 carecall_drt) 밖의 문제라 코드 커밋으로 고칠 수 없다.** v2 프롬프트를 실제 통화로
 재검증하는 것이 다음 단계.
+
+### 실제 발생 기록 — 조회 링크가 이름 충돌로 죽어 있었음 (2026-08-12)
+
+ClawOps SMS 연동을 붙인 뒤 "문자에 실린 URL이 실제로 잘 열리는지, 그 URL에 팀이
+만든 프론트엔드가 있는지" 확인해 달라는 요청을 받고 실측했다.
+
+`https://mock-drt-server.onrender.com/tracking?token=...`(문자에 실릴 형식 그대로)를
+직접 열어 보니 404였다. `/tracking/{token}`(구버전 경로)도 500이었다. 처음에는
+"mock-drt-server가 최신 코드로 재배포되지 않았다"고 오판했다 — Render 대시보드의
+**Events 탭**을 보니 오히려 매 커밋마다 정상적으로 자동 배포되고 있었고, 상단에
+찍힌 **실제 서비스 URL이 `mock-drt-server-4yf1.onrender.com`**으로, render.yaml에
+고정해 둔 `mock-drt-server.onrender.com`과 달랐다. render.yaml 상단 주석에 이미
+"이름 충돌 시 접미사가 붙는다"는 경고와 main-server·mcp-server 사례가 적혀 있었지만,
+**mock-drt-server도 같은 문제를 겪고 있다는 걸 놓치고 있었다.**
+
+실제 배정 주소로 다시 확인하니 최신 코드가 정상 배포돼 있었고(`/tracking?token=...`가
+200, Leaflet 지도 렌더링 확인), `drt-service`의 `DRT_SERVER_BASE_URL`도 이미 올바른
+주소를 가리키고 있어 배차 자체(`"dispatch":"drt_server"`)는 문제없었다. 다만
+mock-drt-server 자신의 `TRACKING_BASE_URL`만 옛 주소로 남아 있어서, **실제로 배차를
+만들어 보니 응답에 담긴 `tracking_url`이 여전히 죽은 주소(`mock-drt-server.onrender.com`)
+로 생성되고 있었다** — 즉 지금까지 나간 모든 예약 문자의 링크가 열리지 않았을 것이다.
+
+대시보드에서 `TRACKING_BASE_URL`을 실제 주소로 정정했고, render.yaml도 세 서비스
+(`TRACKING_BASE_URL`/`DRT_SERVER_BASE_URL`/`DISPATCH_BASE_URL`) 모두 실제 주소로
+갱신했다. **교훈**: 이름 충돌 경고는 특정 서비스에만 적용되는 게 아니라 블루프린트의
+모든 서비스에 각각 따로 적용될 수 있다 — 배포 후 서비스 4개 전부의 실제 URL을
+빠짐없이 확인해야 한다.
 
 ### 실제 발생 기록 — 콜드 스타트로 통화 전체가 실패 (2026-08-11)
 

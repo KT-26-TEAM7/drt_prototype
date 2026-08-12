@@ -7,9 +7,12 @@
 #
 # 서비스 이름(name)이 보통 공개 URL(https://<name>.onrender.com)을 그대로 결정하지만,
 # 그 이름을 Render 전역에서 이미 다른 계정이 쓰고 있으면 임의 접미사가 붙은 실제
-# 주소가 배정된다(실제로 main-server → main-server-ecm1, mcp-server → mcp-server-iyjw로
-# 배정된 사례가 있었다). **배포 후 각 서비스 페이지 상단의 실제 URL을 확인해서, 아래
-# env var들의 고정값이 실제와 다르면 대시보드에서 직접 고쳐야 한다.**
+# 주소가 배정된다(실제로 main-server → main-server-ecm1, mcp-server → mcp-server-iyjw,
+# mock-drt-server → mock-drt-server-4yf1로 배정된 사례가 있었다). **배포 후 각 서비스
+# 페이지 상단의 실제 URL을 확인해서, 아래 env var들의 고정값이 실제와 다르면 대시보드에서
+# 직접 고쳐야 한다.** (2026-08-12: mock-drt-server의 접미사를 놓쳐서 예약 문자에 실리는
+# 조회 링크가 죽어 있던 사례가 실제로 있었다 — TRACKING_BASE_URL/DRT_SERVER_BASE_URL/
+# DISPATCH_BASE_URL 세 곳 모두 확인할 것.)
 
 services:
   # ── ③ 배차 서버 ──────────────────────────────────────────────────────────
@@ -43,8 +46,12 @@ services:
       # 조회 링크 기본 주소. 이 서비스 자신의 Render 주소로 두거나(기본),
       # 기존 GitHub Pages 조회 화면(kt-26-team7.github.io/drt-tracking)을
       # 계속 쓸지 결정 필요 — docs/cloud_deployment.md 참고.
+      # 2026-08-12 실측: mock-drt-server라는 이름이 이미 다른 계정에 쓰이고 있어
+      # 실제로는 mock-drt-server-4yf1로 배정됐다(파일 상단 주석 참고). 이 값이
+      # 실제 배정 주소와 다르면 예약 문자에 실리는 조회 링크가 그대로 죽는다
+      # (실제로 이 문제로 문자 링크가 열리지 않던 것을 확인·수정함).
       - key: TRACKING_BASE_URL
-        value: https://mock-drt-server.onrender.com/tracking
+        value: https://mock-drt-server-4yf1.onrender.com/tracking
 
   # ── ② drt_service ────────────────────────────────────────────────────────
   - type: web
@@ -58,8 +65,9 @@ services:
       # DEBUG를 비워 두면 기본 False — RELAY_API_TOKEN 검증이 살아 있어야 한다.
       - key: CORS_ORIGINS
         value: http://localhost:3000,http://127.0.0.1:3000
+      # 2026-08-12 실측: 실제 배정 주소는 mock-drt-server-4yf1(파일 상단 주석 참고).
       - key: DRT_SERVER_BASE_URL
-        value: https://mock-drt-server.onrender.com
+        value: https://mock-drt-server-4yf1.onrender.com
       # 비밀값: main-server의 RELAY_API_TOKEN과 반드시 같은 값으로 직접 입력
       # (생성: python -c "import secrets;print(secrets.token_urlsafe(32))")
       - key: RELAY_API_TOKEN
@@ -78,8 +86,9 @@ services:
     envVars:
       - key: DRT_BASE_URL
         value: https://drt-service.onrender.com
+      # 2026-08-12 실측: 실제 배정 주소는 mock-drt-server-4yf1(파일 상단 주석 참고).
       - key: DISPATCH_BASE_URL
-        value: https://mock-drt-server.onrender.com
+        value: https://mock-drt-server-4yf1.onrender.com
       # drt-service와 동일한 값으로 직접 입력
       - key: RELAY_API_TOKEN
         sync: false
