@@ -23,7 +23,7 @@ def main() -> None:
     location = None
     if settings.demo_latitude is not None and settings.demo_longitude is not None:
         location = Location(settings.demo_latitude, settings.demo_longitude, settings.demo_accuracy)
-    run_chat(orchestrator, skip_consent=True, show_json=True, location=location)
+    run_chat(orchestrator, skip_consent=True, show_json=settings.show_drt_json, location=location)
 
 
 if __name__ == "__main__":
