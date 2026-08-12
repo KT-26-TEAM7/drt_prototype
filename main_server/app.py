@@ -110,6 +110,7 @@ def create_app() -> FastAPI:
             "status": "ok",
             "service": "케어콜 DRT 메인 서버",
             "responder": care.responder_source,
+            "sms_sender": care.sms_sender_source,
             "drt_backend_enabled": care.settings.drt_enabled,
             "drt_backend_url": care.settings.drt_base_url,
             "active_calls": care.active_count(),

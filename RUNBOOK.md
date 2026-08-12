@@ -504,7 +504,7 @@ Get-NetTCPConnection -LocalPort 8000,8001 -State Listen | ForEach-Object { Stop-
 
 | 항목 | 상태 |
 |---|---|
-| **문자 실제 발송** | 문구는 완성됐고 `data\sent_sms.jsonl` 에 기록됩니다. **발송 게이트웨이는 미연동** — `bridge/notify.py`의 `SmsSender`에 사업자 구현을 끼우면 됩니다 |
+| **문자 실제 발송** | 2026-08-12부터 가능. `bridge/notify.py::ClawOpsSmsSender`가 ClawOps 메시지 API로 보낸다(전화 연동과 같은 계정). `CLAWOPS_API_KEY`/`CLAWOPS_ACCOUNT_ID`/`CLAWOPS_FROM_NUMBER` 셋 다 있어야 하고, 하나라도 비면 자동으로 `RecordingSmsSender`(기록만, `data\sent_sms.jsonl`)로 폴백한다. 로컬 `.env`에는 아직 안 넣어 뒀으므로 로컬 실행은 기본적으로 기록만 된다 |
 | **보호자 알림** | carecall_drt 스키마에 동의 슬롯이 없어져 **항상 비활성화**(어르신 본인 문자만 발송). 필요해지면 `carecall_drt/analyzer.py`·`schemas.py`에 슬롯을 다시 추가해야 합니다 |
 | 예약 시각 | "내일 오전 10시"를 받아도 **지금 배차**됩니다. carecall_drt가 날짜·시간을 슬롯으로 수집은 하지만 drt_service로 전달하지 않습니다(두 서버 모두 예약 일시 미지원) |
 | 배차 서버 인증 | `POST /calls` 에 인증이 없습니다. 로컬 데모는 무방하나 배포 시 필요 |

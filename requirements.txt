@@ -15,3 +15,7 @@ pydantic>=2.10,<3.0
 # 없어도 서버는 뜨고, 대화는 규칙 기반(RuleCareResponder)으로 대신합니다.
 google-genai>=1.0
 python-dotenv>=1.0,<2.0
+
+# bridge/notify.py::ClawOpsSmsSender(실제 문자 발송)가 씁니다. 없거나 키가
+# 없으면 RecordingSmsSender(기록만)로 자동 폴백합니다.
+clawops>=0.40,<1.0

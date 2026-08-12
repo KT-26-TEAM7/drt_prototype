@@ -186,6 +186,9 @@ repo root의 `render.yaml`이 4개 서비스를 한 번에 정의한다. Render 
 | `main-server` | `DRT_RELAY_TOKEN` | **`RELAY_API_TOKEN`과 같은 값**(carecall_drt가 drt_service를 직접 부를 때 쓰는 이름 — 2026-08-11 이식) |
 | `main-server` | `MAIN_SERVER_TOKEN` | 새로 생성 — **`mcp-server`와 동일한 값** |
 | `main-server` | `GEMINI_KEY` | Gemini API 키 |
+| `main-server` | `CLAWOPS_API_KEY` | ClawOps 대시보드 "API & Webhooks"에서 발급한 키(`sk_...`) — 통화 연동에 쓰는 것과 같은 계정 |
+| `main-server` | `CLAWOPS_ACCOUNT_ID` | 같은 페이지의 Account ID(`AC...`) |
+| `main-server` | `CLAWOPS_FROM_NUMBER` | 그 계정에 사전 등록된 발신 번호(통화에 쓰는 070 번호) — 없으면 문자는 기록만 되고 실제 발송은 안 됨 |
 | `mcp-server` | `MAIN_SERVER_TOKEN` | `main-server`와 동일한 값 |
 
 나머지(서비스 간 URL 등)는 `render.yaml`에 이미 고정값으로 들어 있다 — 서비스

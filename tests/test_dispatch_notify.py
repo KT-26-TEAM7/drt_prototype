@@ -9,6 +9,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
+
+import httpx
 
 from bridge import notify, speech
 from bridge.config import BASE_DIR, Settings
@@ -16,6 +19,13 @@ from bridge.fake_service import FakeDrtService
 from bridge.location import ProfileStore
 from bridge.notify import ROLE_ELDER, ROLE_GUARDIAN, RecordingSmsSender, SmsMessage
 from bridge.orchestrator import ACTION_RESERVED, DrtHandoff
+
+try:
+    import clawops  # bridge 코어는 표준 라이브러리만 쓰지만, ClawOpsSmsSender 자체가
+    # 선택 의존성이므로 이 테스트도 없으면 건너뛴다(RecordingSmsSender 쪽 테스트는
+    # 그대로 설치 없이 돈다).
+except ModuleNotFoundError:
+    clawops = None
 
 SAMPLES = BASE_DIR / "samples"
 
@@ -156,6 +166,66 @@ class HandoffNotificationTest(unittest.TestCase):
         log = Path(self.config.audit_log_path).read_text(encoding="utf-8")
         self.assertNotIn(outcome.tracking_url, log)
         self.assertIn('"tracking_issued": true', log)
+
+
+@unittest.skipUnless(clawops is not None, "clawops 패키지가 설치돼 있지 않음")
+class ClawOpsSmsSenderTest(unittest.TestCase):
+    """실제 네트워크 호출 없이 성공/실패 경로만 확인한다(클라이언트를 몽키패치)."""
+
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.log_path = Path(self._tmp.name) / "sms.jsonl"
+        self.sender = notify.ClawOpsSmsSender(
+            "sk_test", "AC_test", "01000000000", log_path=self.log_path,
+        )
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def _log_entries(self) -> list[dict]:
+        lines = self.log_path.read_text(encoding="utf-8").strip().splitlines()
+        return [json.loads(line) for line in lines]
+
+    def test_접수되면_성공으로_기록한다(self):
+        sent_kwargs = {}
+
+        def fake_create(self_, **kwargs):
+            sent_kwargs.update(kwargs)
+            return clawops.types.message.Message(
+                message_id="msg_1", status="queued", type="sms",
+                to=kwargs["to"], from_=kwargs["from_"], num_media=0,
+                direction="outbound", account_id="AC_test",
+                date_created="2026-08-12T00:00:00Z",
+            )
+
+        # ClawOps.messages는 접근할 때마다 새 Messages 인스턴스를 만드는
+        # property라, 인스턴스에 몽키패치를 걸어도 다음 접근에서 사라진다.
+        # 클래스 메서드 자체를 patch해야 실제로 먹는다.
+        with mock.patch.object(clawops.resources.Messages, "create", fake_create):
+            ok = self.sender.send(SmsMessage(ROLE_ELDER, "01012345678", "예약 문구"))
+
+        self.assertTrue(ok)
+        self.assertEqual(sent_kwargs["to"], "01012345678")
+        self.assertEqual(sent_kwargs["from_"], "01000000000")
+        entry = self._log_entries()[-1]
+        self.assertTrue(entry["delivered"])
+        self.assertEqual(entry["message_id"], "msg_1")
+
+    def test_API_오류가_나도_통화를_끊지_않고_실패로_기록한다(self):
+        def fake_create(self_, **kwargs):
+            raise clawops.AuthenticationError(
+                "invalid api key",
+                response=httpx.Response(401, request=httpx.Request("POST", "https://api.claw-ops.com/messages")),
+                body=None,
+            )
+
+        with mock.patch.object(clawops.resources.Messages, "create", fake_create):
+            ok = self.sender.send(SmsMessage(ROLE_ELDER, "01012345678", "예약 문구"))
+
+        self.assertFalse(ok)
+        entry = self._log_entries()[-1]
+        self.assertFalse(entry["delivered"])
+        self.assertIn("AuthenticationError", entry["error"])
 
 
 if __name__ == "__main__":

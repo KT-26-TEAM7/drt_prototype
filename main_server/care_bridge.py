@@ -114,7 +114,8 @@ class CareCallBridge:
         self.responder = self._build_responder()
         self.responder_source = type(self.responder).__name__
         self._backend = DRTBackendClient(self.settings) if self.settings.drt_enabled else None
-        self.sms_sender = notify.RecordingSmsSender(bridge_settings.sms_log_path)
+        self.sms_sender = self._build_sms_sender()
+        self.sms_sender_source = type(self.sms_sender).__name__
         self._sessions: dict[str, CallSession] = {}
 
     def _build_responder(self):
@@ -126,6 +127,23 @@ class CareCallBridge:
             except Exception:  # SDK 미설치·키 형식 오류 등 — 규칙 기반으로 계속 진행
                 pass
         return RuleCareResponder()
+
+    def _build_sms_sender(self):
+        if (
+            bridge_settings.clawops_api_key
+            and bridge_settings.clawops_account_id
+            and bridge_settings.clawops_from_number
+        ):
+            try:
+                return notify.ClawOpsSmsSender(
+                    bridge_settings.clawops_api_key,
+                    bridge_settings.clawops_account_id,
+                    bridge_settings.clawops_from_number,
+                    log_path=bridge_settings.sms_log_path,
+                )
+            except Exception:  # clawops 패키지 미설치·키 형식 오류 등 — 기록만으로 계속 진행
+                pass
+        return notify.RecordingSmsSender(bridge_settings.sms_log_path)
 
     # ── 통화 시작/종료 ──────────────────────────────────────────────────
 

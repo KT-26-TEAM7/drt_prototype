@@ -71,11 +71,21 @@ class Settings:
             os.getenv("AUDIT_LOG_PATH", str(BASE_DIR / "data" / "handoff_log.jsonl"))
         )
     )
-    # 보낼 문자 내용 기록. 실제 발송 게이트웨이가 붙기 전까지는 여기에만 쌓인다.
+    # 보낼 문자 내용 기록. ClawOpsSmsSender를 쓸 때도 실제 발송 결과(delivered/
+    # message_id/error)를 같이 남긴다 — RecordingSmsSender 전용이 아니다.
     sms_log_path: Path = field(
         default_factory=lambda: Path(
             os.getenv("SMS_LOG_PATH", str(BASE_DIR / "data" / "sent_sms.jsonl"))
         )
+    )
+
+    # ClawOps 메시지 API(실제 문자 발송). 셋 다 있어야 ClawOpsSmsSender를 쓴다 —
+    # 하나라도 비면 RecordingSmsSender(기록만)로 폴백한다(main_server/care_bridge.py).
+    clawops_api_key: str = field(default_factory=lambda: os.getenv("CLAWOPS_API_KEY", "").strip())
+    clawops_account_id: str = field(default_factory=lambda: os.getenv("CLAWOPS_ACCOUNT_ID", "").strip())
+    # 통화에 쓰는 것과 같은, ClawOps 계정에 사전 등록된 발신 번호.
+    clawops_from_number: str = field(
+        default_factory=lambda: os.getenv("CLAWOPS_FROM_NUMBER", "").strip()
     )
 
 

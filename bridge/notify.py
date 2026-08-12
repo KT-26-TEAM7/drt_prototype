@@ -3,9 +3,9 @@
 배차 서버가 조회 링크와 문구(`tracking_message`)를 만들어 주므로, 브릿지는
 누구에게 보낼지 정하고 실제 발송기에 넘긴다.
 
-**실제 문자 발송 게이트웨이는 아직 붙어 있지 않다.** 계약(SmsSender)과 기록용
-구현만 두었고, 문자 사업자 연동은 별도 작업이다. 그래서 지금은 보낼 내용이
-무엇인지 눈으로 확인하고 로그로 남기는 데까지만 한다.
+**2026-08-12부터 ClawOps 메시지 API로 실제 발송이 가능하다**(`ClawOpsSmsSender`,
+전화 연동에 이미 쓰고 있는 ClawOps 계정을 그대로 쓴다). 키가 없거나
+`clawops` 패키지가 안 깔려 있으면 `RecordingSmsSender`(기록만)로 자동 폴백한다.
 """
 from __future__ import annotations
 
@@ -63,6 +63,70 @@ class RecordingSmsSender:
             except OSError:
                 return False
         return True
+
+
+class ClawOpsSmsSender:
+    """ClawOps 메시지 API로 실제 문자를 보낸다.
+
+    전화 연동에 이미 쓰고 있는 ClawOps 계정(API & Webhooks에서 발급한 API 키·
+    Account ID)을 그대로 쓴다. 발신 번호는 그 계정에 **사전 등록된 번호**여야
+    한다(ClawOps SDK `Messages.create`의 제약) — 통화에 쓰는 070 번호를 쓰면 된다.
+
+    `clawops` 패키지는 선택 의존성이다(설치 안 돼 있으면 이 클래스를 쓰지 않고
+    `RecordingSmsSender`로 대신한다 — `main_server/care_bridge.py` 참고).
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        account_id: str,
+        from_number: str,
+        *,
+        log_path: str | Path | None = None,
+    ) -> None:
+        import clawops  # 지연 import — 미설치 환경에서도 모듈 자체는 로드되게
+
+        self._clawops = clawops
+        self._client = clawops.ClawOps(api_key=api_key, account_id=account_id)
+        self._from = from_number
+        self.log_path = Path(log_path) if log_path else None
+        self.sent: list[SmsMessage] = []
+
+    def send(self, message: SmsMessage) -> bool:
+        self.sent.append(message)
+        error: str | None = None
+        message_id: str | None = None
+        try:
+            result = self._client.messages.create(
+                to=message.to, from_=self._from, body=message.text, type="sms",
+            )
+            # queued/sending/sent는 접수된 것으로 본다 — 실제 통신망 전달까지는
+            # 비동기라 이 시점에 최종 배달 확인은 안 된다.
+            ok = result.status in {"queued", "sending", "sent"}
+            message_id = result.message_id
+            if not ok:
+                error = f"status={result.status}"
+        except self._clawops.ClawOpsError as exc:
+            ok = False
+            error = f"{type(exc).__name__}: {exc}"
+
+        if self.log_path is not None:
+            try:
+                self.log_path.parent.mkdir(parents=True, exist_ok=True)
+                entry = {
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "role": message.role,
+                    "to": message.to,
+                    "text": message.text,
+                    "delivered": ok,
+                    "message_id": message_id,
+                    "error": error,
+                }
+                with self.log_path.open("a", encoding="utf-8") as handle:
+                    handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+            except OSError:
+                pass
+        return ok
 
 
 def build_messages(
