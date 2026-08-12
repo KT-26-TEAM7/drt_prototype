@@ -92,13 +92,21 @@ class ClawOpsSmsSender:
         self.log_path = Path(log_path) if log_path else None
         self.sent: list[SmsMessage] = []
 
+    # 실제 통화(2026-08-12)에서 확인한 ClawOps SMS 제한 — 이 바이트 수를 넘으면
+    # "SMS Body는 200byte를 초과할 수 없습니다"로 거절된다. 우리 예약 확정 문구
+    # (안내 문구+조회 링크)는 대부분 이 한도를 넘어서, 길이에 따라 LMS로 자동
+    # 전환한다(짧으면 sms 그대로 — 요금 등급이 낮다).
+    _SMS_BYTE_LIMIT = 200
+
     def send(self, message: SmsMessage) -> bool:
         self.sent.append(message)
         error: str | None = None
         message_id: str | None = None
+        body_bytes = len(message.text.encode("utf-8"))
+        message_type = "sms" if body_bytes <= self._SMS_BYTE_LIMIT else "lms"
         try:
             result = self._client.messages.create(
-                to=message.to, from_=self._from, body=message.text, type="sms",
+                to=message.to, from_=self._from, body=message.text, type=message_type,
             )
             # queued/sending/sent는 접수된 것으로 본다 — 실제 통신망 전달까지는
             # 비동기라 이 시점에 최종 배달 확인은 안 된다.
@@ -115,7 +123,8 @@ class ClawOpsSmsSender:
         # 전화번호·본문은 개인정보라 찍지 않고, 성공/실패와 원인만 stdout에
         # 남겨 Render Logs에서 바로 보이게 한다.
         print(
-            f"[ClawOpsSmsSender] role={message.role} ok={ok}"
+            f"[ClawOpsSmsSender] role={message.role} type={message_type}"
+            f" bytes={body_bytes} ok={ok}"
             f"{f' message_id={message_id}' if message_id else ''}"
             f"{f' error={error}' if error else ''}",
             flush=True,
@@ -129,6 +138,7 @@ class ClawOpsSmsSender:
                     "role": message.role,
                     "to": message.to,
                     "text": message.text,
+                    "type": message_type,
                     "delivered": ok,
                     "message_id": message_id,
                     "error": error,

@@ -207,9 +207,39 @@ class ClawOpsSmsSenderTest(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(sent_kwargs["to"], "01012345678")
         self.assertEqual(sent_kwargs["from_"], "01000000000")
+        self.assertEqual(sent_kwargs["type"], "sms")  # 짧은 문구는 그대로 sms
         entry = self._log_entries()[-1]
         self.assertTrue(entry["delivered"])
         self.assertEqual(entry["message_id"], "msg_1")
+
+    def test_200바이트_넘으면_LMS로_자동_전환한다(self):
+        """실제 통화(2026-08-12)에서 재현된 버그: 예약 확정 문구(안내+조회 링크)가
+        200바이트를 넘어 "SMS Body는 200byte를 초과할 수 없습니다"로 거절됐다."""
+        sent_kwargs = {}
+
+        def fake_create(self_, **kwargs):
+            sent_kwargs.update(kwargs)
+            return clawops.types.message.Message(
+                message_id="msg_2", status="queued", type=kwargs["type"],
+                to=kwargs["to"], from_=kwargs["from_"], num_media=0,
+                direction="outbound", account_id="AC_test",
+                date_created="2026-08-12T00:00:00Z",
+            )
+
+        long_text = (
+            "이동 차량 예약이 완료되었습니다.\n승차 장소: 남성역\n"
+            "아래 링크에서 차량 위치와 도착 예정시간을 확인해 주세요.\n"
+            "https://mock-drt-server-4yf1.onrender.com/tracking?token=" + "a" * 40
+        )
+        self.assertGreater(len(long_text.encode("utf-8")), 200)
+
+        with mock.patch.object(clawops.resources.Messages, "create", fake_create):
+            ok = self.sender.send(SmsMessage(ROLE_ELDER, "01012345678", long_text))
+
+        self.assertTrue(ok)
+        self.assertEqual(sent_kwargs["type"], "lms")
+        entry = self._log_entries()[-1]
+        self.assertEqual(entry["type"], "lms")
 
     def test_API_오류가_나도_통화를_끊지_않고_실패로_기록한다(self):
         def fake_create(self_, **kwargs):
