@@ -151,7 +151,18 @@ class CareCallDRTOrchestrator:
         backend_error: str | None = None
 
         # 모든 예약 슬롯을 모은 뒤 계획을 한 번 계산하고, 실제 예약 전 최종 경로 확인.
-        if analysis.ready_for_reservation and self.backend is not None and state.pending_plan is None:
+        # state.pending_reservation is None 조건이 원래 빠져 있었다 — 예약이 이미
+        # 완료된 뒤에도 슬롯(목적지/날짜/시간/픽업)이 SessionState에 그대로 남아
+        # 있어 ready_for_reservation이 계속 True였다. 그래서 예약 성공 후 아무
+        # 발화("고마워" 같은 인사조차)에 대해서도 매번 같은 경로를 다시 계획하고,
+        # 그 답이 우연히 긍정으로 들리면(예: "응," "진행해 줘") 차량이 한 번 더
+        # 배차되는 실제 이중 배차 버그가 났다(2026-08-12 실제 통화에서 재현).
+        if (
+            analysis.ready_for_reservation
+            and self.backend is not None
+            and state.pending_plan is None
+            and state.pending_reservation is None
+        ):
             try:
                 plan, request = self.backend.plan(
                     analysis,

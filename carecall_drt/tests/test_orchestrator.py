@@ -121,6 +121,16 @@ def test_end_to_end_plan_then_confirm_reservation() -> None:
     assert "3분" in second.assistant_reply
     assert state.pending_plan is None
 
+    # 실제 통화(2026-08-12)에서 재현된 이중 배차 버그: 예약이 끝난 뒤에도 목적지·
+    # 날짜·시간·픽업 슬롯이 SessionState에 그대로 남아 있어 ready_for_reservation이
+    # 계속 True였다. 그래서 "고마워" 같은 인사말에도 매번 같은 경로를 다시 계획해
+    # 버렸고, 답이 우연히 긍정으로 들리면 차량이 한 번 더 배차됐다. 예약 완료 후
+    # 어떤 발화가 와도 더 이상 /api/plan을 다시 부르면 안 된다.
+    third = orchestrator.process_turn("끝난 걸까 고마워", state)
+    assert calls == ["/api/plan", "/api/reservations"]  # 늘어나면 안 된다
+    assert third.plan is None
+    assert state.pending_plan is None
+
 
 def test_pending_route_negative_does_not_reserve() -> None:
     settings = Settings(gemini_policy="off")
