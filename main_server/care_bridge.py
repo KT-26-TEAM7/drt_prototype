@@ -339,6 +339,8 @@ class CareCallBridge:
             "dialogue_stage": (state.last_analysis.dialogue_stage if state.last_analysis else "unknown"),
             "destination_category": state.destination_category,
             "reservation_consent": state.reservation_consent,
+            "target_slot": (state.last_analysis.target_slot if state.last_analysis else None),
+            "missing_slots": (list(state.last_analysis.missing_slots) if state.last_analysis else []),
             "reserved": state.pending_reservation is not None,
             "tts_violations": list(violations),
         }

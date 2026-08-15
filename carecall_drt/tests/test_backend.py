@@ -90,6 +90,23 @@ def test_plan_and_reservation_http_calls() -> None:
     assert all(item[2] == "token" for item in requests)
 
 
+def test_reservation_rejection_is_not_treated_as_success() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={
+            "ok": False,
+            "reservation": None,
+            "reason": "현재 이용 가능한 차량이 없습니다.",
+        })
+
+    settings = Settings(drt_base_url="http://test")
+    client = DRTBackendClient(
+        settings,
+        client=httpx.Client(base_url="http://test", transport=httpx.MockTransport(handler)),
+    )
+    with pytest.raises(DRTBackendError, match="이용 가능한 차량"):
+        client.create_reservation({"query": "병원"})
+
+
 @pytest.mark.parametrize(
     ("status", "kind"),
     [

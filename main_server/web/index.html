@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f5">
+  <title>다솜 이동지원</title>
+  <link rel="stylesheet" href="/demo-assets/styles.css?v=20260815-15">
+</head>
+<body>
+  <header>
+    <div class="demo-options">
+      <label><span>통화 대상</span><select id="userSelect"><option value="elder_demo_01">김복순 어르신</option><option value="elder_demo_02">박영수 어르신</option><option value="elder_demo_03">이말순 어르신</option></select></label>
+    </div>
+    <div class="header-actions">
+      <span class="connection"><i></i><b id="serverLabel">연결 확인 중</b></span>
+      <button id="resetButton" class="icon-button hidden" title="새 대화" aria-label="새 대화">↻</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="chat-shell">
+      <div class="chat-head">
+        <div class="agent-avatar"><canvas class="robot-canvas" width="160" height="160"></canvas></div>
+        <div><strong>다솜이</strong><span>이동지원 상담</span></div>
+        <div class="call-live"><i></i><time id="elapsed">00:00</time></div>
+      </div>
+
+      <div class="start-screen" id="startScreen">
+        <p class="incoming-label">수신 전화</p>
+        <div class="incoming-avatar">
+          <canvas class="robot-canvas" width="360" height="360"></canvas>
+          <i></i><i></i><i></i>
+        </div>
+        <h1>다솜이</h1>
+        <div class="incoming-actions">
+          <button id="declineButton" class="incoming-button decline" type="button"><span>⌕</span><small>거절</small></button>
+          <button id="startButton" class="incoming-button accept" type="button"><span>⌕</span><small>통화</small></button>
+        </div>
+        <button class="ring-help hidden" id="ringHelp" type="button">벨소리 켜기</button>
+      </div>
+
+      <div class="call-scene hidden" id="callScene">
+        <div class="call-people">
+          <div class="call-person dasom active" id="dasomPerson">
+            <div class="portrait"><canvas class="robot-canvas" width="320" height="320"></canvas><span class="voice-ring"></span></div>
+            <strong>다솜이</strong><small>이동지원 도우미</small>
+          </div>
+          <div class="call-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="call-person elder" id="elderPerson">
+            <div class="portrait"><img src="/demo-assets/assets/grandmother.png" alt="김복순 어르신"><span class="voice-ring"></span></div>
+            <strong id="elderName">김복순 어르신</strong><small>통화 연결됨</small>
+          </div>
+        </div>
+        <div class="speech-lines">
+          <div class="speech-line dasom-line active" id="dasomLine"><span>다솜이</span><p id="dasomSpeech">안녕하세요. 오늘은 어떻게 지내셨어요?</p></div>
+          <div class="speech-line elder-line" id="elderLine"><span id="elderSpeechName">김복순 어르신</span><p id="elderSpeech">말씀을 기다리고 있어요.</p></div>
+        </div>
+        <div class="suggestions call-suggestions" id="testPrompt" aria-label="통합 테스트용 추천 응답"></div>
+        <button type="button" id="endCallButton" class="simple-end" aria-label="통화 종료"><span>⌕</span></button>
+      </div>
+      <div class="message-screen hidden" id="messageScreen">
+        <div class="lock-time"><time id="lockTime">10:24</time><span>오늘</span></div>
+        <div class="call-ended"><i>✓</i><span id="callEndedText">다솜이와의 통화가 종료되었습니다</span></div>
+        <div class="message-notification hidden" id="messageNotification">
+          <div class="notification-head"><span class="message-app">●</span><strong>메시지</strong><time>지금</time></div>
+          <div class="notification-body">
+            <canvas class="robot-canvas" width="120" height="120"></canvas>
+            <div><strong>다솜 이동지원</strong><p id="notificationText">차량 예약 결과를 확인했습니다.</p></div>
+          </div>
+          <button type="button" id="notificationLink">실시간 차량 위치 확인</button>
+        </div>
+        <button class="new-call-button" id="newCallButton" type="button">처음 화면으로</button>
+      </div>
+      <div class="phone-tracking hidden" id="phoneTracking">
+        <div class="tracking-nav"><button id="trackingBack" type="button" aria-label="문자로 돌아가기">‹</button><strong>차량 위치</strong><button id="trackingReload" type="button" aria-label="새로고침">↻</button></div>
+        <div class="tracking-loading" id="trackingLoading"><i></i><span>mock-drt 조회 화면을 불러오고 있습니다</span></div>
+        <iframe id="trackingFrame" title="mock-drt 실시간 차량 위치" class="hidden"></iframe>
+      </div>
+      <div class="conversation transcript hidden" id="conversation" aria-live="polite"></div>
+      <div class="composer hidden" id="composer" aria-hidden="true">
+        <div class="voice-status hidden" id="voiceStatus"><i></i><span>말씀을 듣고 있어요</span></div>
+        <form id="utteranceForm">
+          <button type="button" class="mic-button" id="micButton" aria-label="음성으로 말하기" title="음성으로 말하기">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a4 4 0 0 0 4-4V7a4 4 0 1 0-8 0v4a4 4 0 0 0 4 4Zm-7-4a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
+          </button>
+          <input id="utteranceInput" maxlength="500" placeholder="말하거나 직접 입력하세요" autocomplete="off">
+          <button class="send-button" type="submit" aria-label="보내기">↑</button>
+        </form>
+      </div>
+    </section>
+
+    <aside class="route-shell" id="routeShell">
+      <div class="route-empty" id="routeEmpty">
+        <span>⌁</span>
+        <strong>아직 계산된 경로가 없어요</strong>
+        <p>대화에서 이동 정보가 확인되면<br>경로 계산 과정이 여기에 표시됩니다.</p>
+      </div>
+
+      <div class="route-content hidden" id="routeContent">
+        <div class="route-head"><span>백엔드 처리 과정</span><b id="routeStatus">요청 확인 중</b></div>
+        <ol class="backend-flow" id="backendFlow">
+          <li data-key="analyze"><i>1</i><strong>발화 분석</strong><b>대기</b></li>
+          <li data-key="collect"><i>2</i><strong>예약 정보 수집</strong><b>대기</b></li>
+          <li data-key="plan"><i>3</i><strong>경로 계산 · 최종 확인</strong><b>대기</b></li>
+          <li data-key="reserve"><i>4</i><strong>차량 예약 요청</strong><b>대기</b></li>
+          <li data-key="notify"><i>5</i><strong>추적 링크 · 문자 안내</strong><b>대기</b></li>
+        </ol>
+      </div>
+    </aside>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <img class="robot-source" id="robotSource" src="/demo-assets/assets/dasom-robot-key.png" alt="">
+  <script src="/demo-assets/app.js?v=20260815-20"></script>
+</body>
+</html>

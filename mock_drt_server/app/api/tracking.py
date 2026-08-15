@@ -17,7 +17,6 @@ TRACKING_HTML_PATH = PROJECT_ROOT / "web" / "tracking" / "index.html"
 _TRACKING_HEADERS = {
     "Cache-Control": "no-store",
     "Referrer-Policy": "no-referrer",
-    "X-Frame-Options": "DENY",
 }
 
 

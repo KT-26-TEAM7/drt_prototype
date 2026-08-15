@@ -31,10 +31,13 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Security, status
+from fastapi.responses import FileResponse
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
+WEB_DIR = Path(__file__).resolve().parent / "web"
 if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
 
@@ -109,6 +112,17 @@ def create_app() -> FastAPI:
         description="통화를 소유하고 대화 상태·의도 분석·DRT 예약을 지휘합니다.",
         lifespan=lifespan,
     )
+
+    application.mount(
+        "/demo-assets",
+        StaticFiles(directory=WEB_DIR),
+        name="demo-assets",
+    )
+
+    @application.get("/demo", include_in_schema=False, response_class=FileResponse)
+    def demo_page() -> FileResponse:
+        """통화 시작부터 배차·문자까지 한 화면에서 보여 주는 시연 페이지."""
+        return FileResponse(WEB_DIR / "index.html", media_type="text/html; charset=utf-8")
 
     @application.get("/", tags=["system"])
     def root() -> dict:

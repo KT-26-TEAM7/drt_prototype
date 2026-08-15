@@ -217,7 +217,12 @@ class DRTBackendClient:
         return self._post("/api/plan", request), request
 
     def create_reservation(self, plan_request: dict[str, Any]) -> dict[str, Any]:
-        return self._post("/api/reservations", plan_request)
+        response = self._post("/api/reservations", plan_request)
+        reservation = response.get("reservation")
+        if response.get("ok") is False or not isinstance(reservation, dict):
+            reason = str(response.get("reason") or "차량 예약이 접수되지 않았습니다.")
+            raise DRTBackendError(reason)
+        return response
 
     def health(self) -> dict[str, Any]:
         try:
